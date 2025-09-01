@@ -1,0 +1,19 @@
+FROM python:3.11-slim
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+# НОРМАЛИЗУЕМ CRLF -> LF и выдаём +x
+RUN set -eux; \
+    for f in start.sh start_worker.sh start_reminder.sh start_telegram.sh; do \
+      if [ -f "$f" ]; then \
+        sed -i 's/\r$//' "$f"; \
+        chmod +x "$f"; \
+      fi; \
+    done
+
+EXPOSE 8080
+CMD ["bash", "-c", "echo '=== ls -l /app ===' && ls -l /app && echo '=== running start.sh ===' && ./start.sh"]

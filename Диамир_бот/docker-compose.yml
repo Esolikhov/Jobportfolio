@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: app_web
+    command: ["./start.sh"]
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  worker:
+    build: .
+    container_name: app_worker
+    command: ["./start_worker.sh"]
+    restart: unless-stopped
+
+  reminder:
+    build: .
+    container_name: app_reminder
+    command: ["./start_reminder.sh"]
+    restart: unless-stopped
+
+  telegram:
+    build: .
+    container_name: app_telegram
+    command: ["./start_telegram.sh"]
+    restart: unless-stopped

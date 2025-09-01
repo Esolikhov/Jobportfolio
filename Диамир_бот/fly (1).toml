@@ -1,0 +1,52 @@
+# fly.toml — полный
+
+app = "diamirbot-whatsapp"
+primary_region = "arn"
+
+[build]
+  dockerfile = "Dockerfile"
+
+# Без канареек и без «standby» во время деплоя — создаёт/обновляет только нужные машины
+[deploy]
+  strategy = "immediate"
+
+# Общие переменные окружения внутри контейнера (удобно для логов времени)
+[env]
+  TZ = "Asia/Dushanbe"
+  PYTHONUNBUFFERED = "1"
+
+# Группы процессов. Количество машин зададим командой scale (web=1 worker=1 reminder=1 telegram=1)
+[processes]
+  web      = "bash ./start.sh"
+  worker   = "bash ./start_worker.sh"
+  reminder = "bash ./start_reminder.sh"
+  telegram = "bash ./start_telegram.sh"
+
+# HTTP сервис ТОЛЬКО для web
+[http_service]
+  internal_port = 8080
+  processes = ["web"]
+  auto_start_machines   = true
+  auto_stop_machines    = true
+  min_machines_running  = 1   # держим одну веб-машину
+  force_https = true
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 200
+    soft_limit = 150
+
+  [[http_service.checks]]
+    interval = "10s"
+    timeout  = "2s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/webhook"  # или "/" если так удобнее
+    protocol = "http"
+    tls_skip_verify = false
+
+# Ресурсы ВМ (для всех групп по умолчанию)
+[[vm]]
+  memory   = "1gb"
+  cpu_kind = "shared"
+  cpus     = 1
