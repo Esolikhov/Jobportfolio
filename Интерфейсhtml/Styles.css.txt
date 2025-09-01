@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <title>ТИАС - Редактирование продукта</title>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon/favicon.ico" />
+    <!--Fonts-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&amp;display=swap" rel="stylesheet">
+
+<!-- Icons -->
+<link rel="stylesheet" href="/static/assets/vendor/fonts/tabler-icons.css" />
+<link rel="stylesheet" href="/static/assets/vendor/fonts/fontawesome.css" />
+
+<!--Core CSS -->
+<link rel="stylesheet" href="/static/assets/vendor/css/core.css" />
+<link rel="stylesheet" href="/static/assets/vendor/css/theme-default.css" />
+
+<link rel="stylesheet" href="/static/css/main.css" />
+
+<!--Vendor CSS-->
+<link rel="stylesheet" href="/static/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" />
+<link rel="stylesheet" href="/static/assets/vendor/libs/typeahead-js/typeahead.css" />
+<link rel="stylesheet" href="/static/assets/vendor/libs/node-waves/node-waves.css" />
+
+    
+
+<link rel="stylesheet" href="/static/assets/vendor/libs/datatables-bs5/datatables.bootstrap5.css" />
+<link rel="stylesheet" href="/static/assets/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css" />
+
+    
+
+    
+<script src="/static/assets/vendor/js/helpers.js"></script>
+<script src="/static/js/config.js"></script>
+
+  </head>
+  <body>
+    
+    <!-- Layout wrapper -->
+    <div class="layout-wrapper layout-navbar-full layout-horizontal layout-without-menu">
+      <div class="layout-container">
+          
+
+<!-- Navbar -->
+<nav class="layout-navbar navbar navbar-expand-xl align-items-center bg-navbar-theme" id="layout-navbar">
+  <div class="container-xxl">
+    <div class="navbar-brand app-brand demo d-none d-xl-flex py-0 me-4">
+      <a href="/" class="app-brand-link">
+        <span class="app-brand-logo demo">
+          <svg viewBox="0 0 39 49" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M34.707 10.4036L34.864 7.98045L32.9513 6.23561L28.7462 10.3273H26.1289L23.0253 13.1321L22.8399 18.1834L19.2935 19.4048L15.7406 18.1878L15.5574 13.1364L12.4516 10.3294H9.83434L5.8234 6.23997H11.8976L13.7013 6.09821L19.287 10.0372L24.8879 6.08076L26.6458 6.23997H32.9447H30.4779L24.046 0H14.6392L8.32724 6.23779H5.80813L3.89753 7.88885L4.06329 10.3164L0 14.6283L0.0763363 29.4943L18.0547 46.6744L19.4724 44.7551L20.7461 48.7464L38.6939 29.4943L38.7703 14.6305L34.707 10.4036ZM10.0612 12.3665L14.2837 16.4015L11.7406 18.2205L6.02623 12.384L10.0612 12.3665ZM20.7243 34.8313L19.4157 33.7081L17.9915 35.8891L14.5323 31.1432L17.5858 28.2795H20.9511L24.0046 31.1432L20.7243 34.8313ZM22.757 28.3667L19.2826 25.3132L15.8104 28.3558L11.2106 23.7102C11.2106 23.7102 14.9881 20.0133 15.0558 20.0286C16.4974 20.3557 18.5694 21.7167 19.2848 22.2096C20.0242 21.7014 22.2031 20.2707 23.6469 20.0046C23.6687 20.0046 27.3547 23.7123 27.3547 23.7123L22.757 28.3667ZM26.8094 18.2205L24.2663 16.4015L28.491 12.3753H32.5259L26.8094 18.2205Z" style="paint-order: fill; fill: rgb(255, 190, 7);" transform="matrix(1, 0, 0, 1, -1.7763568394002505e-15, 0)"/>
+</svg>
+
+        </span>
+        <div class="d-flex flex-column flex-xl-row align-items-center">
+          <div class="d-block d-xl-none">
+            <span class="brand-text app-logo-text main-text fw-bold logo-main-text fs-4 d-block">BIMA</span>
+            <span class="brand-text app-brand-sub-text-sm demo d-block">INSURANCE</span>
+          </div>
+          <div class="d-inline-flex d-none d-xl-flex align-items-center">
+            <span class="brand-text app-logo-text main-text menu-text fw-bold fs-4">BIMA</span>
+            <span class="brand-text app-brand-sub-text ms-1 fs-5">INSURANCE</span>
+          </div>
+        </div>
+      </a>
+      <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-xl-none">
+        <i class="ti ti-x ti-md align-middle"></i>
+      </a>
+    </div>
+
+
+    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+      <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
+        <i class="ti ti-menu-2 ti-md"></i>
+      </a>
+    </div>
+
+    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+      <ul class="navbar-nav flex-row align-items-center ms-auto">
+        <!-- Search -->
+        <li class="nav-item navbar-search-wrapper">
+          <a
+            class="nav-link btn btn-text-secondary btn-icon rounded-pill search-toggler"
+            href="javascript:void(0);">
+            <i class="ti ti-search ti-md"></i>
+          </a>
+        </li>
+        <!-- /Search -->
+
+        <!-- Language -->
+        <li class="nav-item dropdown-language dropdown">
+          <a
+            class="nav-link btn btn-text-secondary btn-icon rounded-pill dropdown-toggle hide-arrow"
+            href="javascript:void(0);"
+            data-bs-toggle="dropdown">
+            <i class="ti ti-language rounded-circle ti-md"></i>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <a class="dropdown-item" href="javascript:void(0);" data-language="en" data-text-direction="ltr">
+                <span>Русский</span>
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="javascript:void(0);" data-language="fr" data-text-direction="ltr">
+                <span>Английский</span>
+              </a>
+            </li>
+          </ul>
+        </li>
+        <!--/ Language -->
+
+        <!-- Notification -->
+        <li class="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-2">
+          <a
+            class="nav-link btn btn-text-secondary btn-icon rounded-pill dropdown-toggle hide-arrow"
+            href="javascript:void(0);"
+            data-bs-toggle="dropdown"
+            data-bs-auto-close="outside"
+            aria-expanded="false">
+            <span class="position-relative">
+              <i class="ti ti-bell ti-md"></i>
+              
+            </span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end p-0">
+            <li class="dropdown-menu-header border-bottom">
+              <div class="dropdown-header d-flex align-items-center py-3">
+                <h6 class="mb-0 me-auto">Уведомления</h6>
+                
+              </div>
+            </li>
+            <li class="dropdown-notifications-list scrollable-container">
+              <ul class="list-group list-group-flush">
+                
+                  <li class="list-group-item list-group-item-action dropdown-notifications-item">
+                    <div class="d-flex justify-content-center align-items-center py-3">
+                      <p class="mb-0 text-muted">Нет новых уведомлений</p>
+                    </div>
+                  </li>
+                
+              </ul>
+            </li>
+            
+          </ul>
+
+        </li>
+        <!--/ Notification -->
+
+        <!-- User -->
+        <li class="nav-item navbar-dropdown dropdown-user dropdown">
+          <a
+            class="nav-link dropdown-toggle hide-arrow p-0"
+            href="javascript:void(0);"
+            data-bs-toggle="dropdown">
+            <div class="avatar avatar-online">
+              <img src="/static/img/avatar.png" alt class="rounded-circle" />
+            </div>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <a class="dropdown-item mt-0" href="javascript:void(0);">
+                <div class="d-flex align-items-center">
+                  <div class="flex-shrink-0 me-2">
+                    <div class="avatar avatar-online">
+                      <img src="/static/img/avatar.png" alt class="rounded-circle" />
+                    </div>
+                  </div>
+                  <div class="flex-grow-1">
+                    <h6 class="mb-0">Тестовый Администратор</h6>
+                    <small class="text-muted">Администратор</small>
+                  </div>
+                </div>
+              </a>
+            </li>
+            <li>
+              <div class="dropdown-divider my-1 mx-n2"></div>
+            </li>
+            <li>
+              <a class="dropdown-item" href="javascript:void(0);">
+                <i class="ti ti-user me-3 ti-md"></i><span class="align-middle">Профиль</span>
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="javascript:void(0);">
+                <i class="ti ti-settings me-3 ti-md"></i><span class="align-middle">Настройки</span>
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="javascript:void(0);">
+                <span class="d-flex align-items-center align-middle">
+                  <i class="flex-shrink-0 ti ti-mail me-3 ti-md"></i
+                  ><span class="flex-grow-1 align-middle">Уведомления</span>
+                  
+                </span>
+              </a>
+            </li>
+            <li>
+              <div class="dropdown-divider my-1 mx-n2"></div>
+            </li>
+            <li>
+              <a class="dropdown-item" href="javascript:void(0);">
+                <i class="ti ti-message me-3 ti-md"></i><span class="align-middle">Поддержка</span>
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="https://wiki.bimatj.site/">
+                <i class="ti ti-book-2 me-3 ti-md"></i><span class="align-middle">Документация</span>
+              </a>
+            </li>
+            <li>
+              <div class="d-grid px-2 pt-2 pb-1">
+                <form method="post" action="/logout/">
+                  <input type="hidden" name="csrfmiddlewaretoken" value="YSeWddJmjyk1VAbeoZGt6qZfP1zUEZhveGfFC8UCO8jZCqfGgZWZzMkQQM282Rad">
+                  <button class="btn btn-sm btn-danger w-100" type="submit">
+                    Выйти
+                    <i class="ti ti-logout ms-2 ti-14px"></i>
+                  </button>
+                </form>
+              </div>
+            </li>
+          </ul>
+        </li>
+        <!--/ User -->
+      </ul>
+    </div>
+
+    <!-- Search Small Screens -->
+    <div class="navbar-search-wrapper search-input-wrapper container-xxl d-none">
+      <input
+        type="text"
+        class="form-control search-input border-0"
+        placeholder="Искать..."
+        aria-label="Искать..." />
+      <i class="ti ti-x search-toggler cursor-pointer"></i>
+    </div>
+  </div>
+</nav>
+<!-- / Navbar -->
+        <!-- Layout container -->
+        <div class="layout-page">
+          <div class="content-wrapper">
+            
+<!-- Menu -->
+<aside id="layout-menu" class="layout-menu-horizontal menu-horizontal menu bg-menu-theme bg-menu-theme flex-grow-0">
+  <div class="container-xxl d-flex h-100">
+    <ul class="menu-inner pb-2 pb-xl-0 mt-3 mt-xl-0">
+
+      
+      <li class="menu-item active">
+        <a href="javascript:void(0)" class="menu-link menu-toggle fw-medium">
+          <i class="menu-icon tf-icons ti ti-adjustments-alt"></i>
+          <div>Администрирование</div>
+        </a>
+        <ul class="menu-sub">
+          <li class="menu-item">
+            <a href="/administration/departments/" class="menu-link">
+              <div>Департаменты и отделы</div>
+            </a>
+          </li>
+          <li class="menu-item">
+            <a href="/administration/employees/" class="menu-link">
+              <div>Сотрудники</div>
+            </a>
+          </li>
+          <li class="menu-item">
+            <a href="/administration/agents/" class="menu-link">
+              <div>Иерархия агентов</div>
+            </a>
+          </li>
+          <li class="menu-item">
+            <a href="/administration/products-map/" class="menu-link">
+              <div>Карта продуктов</div>
+            </a>
+          </li>
+          <li class="menu-item">
+            <a href="/administration/users/" class="menu-link">
+              <div>Пользователи</div>
+            </a>
+          </li>
+        </ul>
+      </li>
+      
+
+      <li class="menu-item">
+        <a href="javascript:void(0)" class="menu-link menu-toggle">
+          <i class="menu-icon tf-icons ti ti-library-plus"></i>
+          <div>Новый договор</div>
+        </a>
+        <ul class="menu-sub">
+          <li class="menu-item">
+            <a href="javascript:void(0)" class="menu-link">
+              <div>RRU (ex RU0 индивид) - Выезжающие в РФ</div>
+            </a>
+          </li>
+          <li class="menu-item">
+            <a href="javascript:void(0)" class="menu-link">
+              <div>RTP (ex TP0 индивид) - Выезжающие за рубеж</div>
+            </a>
+          </li>
+        </ul>
+      </li>
+
+      <li class="menu-item">
+        <a href="javascript:void(0)" class="menu-link menu-toggle">
+          <i class="menu-icon tf-icons ti ti-chart-pie"></i>
+          <div>Учет</div>
+        </a>
+
+        <ul class="menu-sub">
+          <li class="menu-item">
+            <a href="javascript:void(0)" class="menu-link">
+              <div>Договора</div>
+            </a>
+          </li>
+          <li class="menu-item">
+            <a href="javascript:void(0)" class="menu-link">
+              <div>Расторжения</div>
+            </a>
+          </li>
+        </ul>
+      </li>
+
+      <li class="menu-item">
+        <a href="javascript:void(0)" class="menu-link menu-toggle">
+          <i class="menu-icon tf-icons ti ti-layout-grid-add"></i>
+          <div data-i18n="Apps">Внешние системы</div>
+        </a>
+        <ul class="menu-sub">
+          <li class="menu-item">
+            <a href="javascript:void(0)" class="menu-link">
+              <div>Купоны</div>
+            </a>
+          </li>
+        </ul>
+      </li>
+
+      <li class="menu-item">
+        <a href="javascript:void(0)" class="menu-link menu-toggle">
+          <i class="menu-icon tf-icons ti ti-library"></i>
+
+          <div data-i18n="Pages">Отчеты</div>
+        </a>
+        <ul class="menu-sub">
+          <li class="menu-item">
+            <a href="javascript:void(0)" class="menu-link">
+              <div>Список договоров</div>
+            </a>
+          </li>
+          <li class="menu-item">
+            <a href="javascript:void(0)" class="menu-link">
+              <div>Отчет по видам страхования</div>
+            </a>
+          </li>
+        </ul>
+      </li>
+      <li class="menu-item">
+        <a href="javascript:void(0)" class="menu-link menu-toggle">
+          <i class="menu-icon tf-icons ti ti-users-group"></i>
+          <div data-i18n="Components">Контрагенты</div>
+        </a>
+        <ul class="menu-sub">
+          <li class="menu-item">
+            <a href="/tp/persons/" class="menu-link">
+              <div>Физические лица</div>
+            </a>
+          </li>
+          <li class="menu-item">
+            <a href="/tp/legal/" class="menu-link">
+              <div>Юридические лица</div>
+            </a>
+          </li>
+        </ul>
+      </li>
+      <li class="menu-item">
+        <a href="javascript:void(0)" class="menu-link menu-toggle">
+          <i class="menu-icon tf-icons ti ti-book"></i>
+          <div data-i18n="Components">Словари</div>
+        </a>
+        <ul class="menu-sub">
+          <li class="menu-item">
+            <a href="/ref/currency/" class="menu-link">
+              <div>Валюта</div>
+            </a>
+          </li>
+          <li class="menu-item">
+            <a href="/ref/coverages/" class="menu-link">
+              <div>Покрытия</div>
+            </a>
+          </li>
+          <li class="menu-item">
+            <a href="/ref/risks/" class="menu-link">
+              <div>Риски</div>
+            </a>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</aside>
+<!-- / Menu -->
+            
+<div class="container-xxl flex-grow-1 container-p-y">
+  <div class="card my-4">
+    <h5 class="card-header pb-2">Редактирование продукта "ECI: Автострахование онлайн"</h5>
+    <form method="post" enctype="multipart/form-data">
+      <div class="card-body">
+        
+
+<input type="hidden" name="csrfmiddlewaretoken" value="YSeWddJmjyk1VAbeoZGt6qZfP1zUEZhveGfFC8UCO8jZCqfGgZWZzMkQQM282Rad"> <div id="div_id_name" class="mb-3"> <label
+                for="id_name" class="form-label">
+                Наименование продукта
+            </label> <input type="text" name="name" value="Автострахование онлайн" maxlength="80" class="textinput form-control" id="id_name"> </div> <div id="div_id_feature" class="mb-3"> <label
+                for="id_feature" class="form-label requiredField">
+                Особенность продукта<span class="asteriskField">*</span> </label> <input type="text" name="feature" value="Автострахование на одно ТС" maxlength="100" class="textinput form-control" required id="id_feature"> </div> <div id="div_id_series" class="mb-3"> <label
+                for="id_series" class="form-label requiredField">
+                Серия<span class="asteriskField">*</span> </label> <input type="text" name="series" value="ECI" maxlength="4" readonly class="textinput form-control" required id="id_series"> </div> <div id="div_id_client_type" class="mb-3"> <label
+                for="id_client_type" class="form-label requiredField">
+                Тип клиента<span class="asteriskField">*</span> </label> <select name="client_type" class="select form-select" id="id_client_type"> <option value="1" selected>Розничный</option> <option value="2">Корпоративный</option>
+
+</select> </div> <div id="div_id_sales_channel" class="mb-3"> <label
+                for="id_sales_channel" class="form-label requiredField">
+                Основной канал продаж<span class="asteriskField">*</span> </label> <select name="sales_channel" class="select form-select" required id="id_sales_channel"> <option value="">---------</option> <option value="1" selected>Собственный</option> <option value="2">Банковский</option> <option value="3">Партнерский</option> <option value="4">Банковский, Партнерский</option>
+
+</select> </div> <div id="div_id_insurance_type" class="mb-3"> <label
+                for="id_insurance_type" class="form-label">
+                Вид страхования
+            </label> <select name="insurance_type" class="select form-select" disabled id="id_insurance_type"> <option value="">---------</option> <option value="AUTO" selected>Автострахование</option> <option value="TRAVEL">ВЗР</option> <option value="CARGO">Грузы и перевозки</option> <option value="PROPERTY">Имущество и ответственность</option> <option value="COMBINED">Комбинированные риски</option> <option value="NSIB">НСиБ</option> <option value="SMR">СМР</option> <option value="FINANCE">Финансовые риски</option>
+
+</select> </div> <div id="div_id_periodicity" class="mb-3"> <label
+                for="id_periodicity" class="form-label">
+                Период оплаты по умолчанию
+            </label> <select name="periodicity" class="select form-select" id="id_periodicity"> <option value="" selected>---------</option> <option value="ONE_TIME">Единовременно</option> <option value="YEARLY">Раз в год</option> <option value="HALF_YEAR">Раз в полгода</option> <option value="QUARTERLY">Ежеквартально</option> <option value="MONTHLY">Ежемесячно</option>
+
+</select> </div> <div id="div_id_code_f" class="mb-3"> <label
+                for="id_code_f" class="form-label requiredField">
+                Код особенности продукта<span class="asteriskField">*</span> </label> <input type="text" name="code_f" value="CI" maxlength="2" readonly class="textinput form-control" required id="id_code_f"> </div> <div id="div_id_code_s" class="mb-3"> <label
+                for="id_code_s" class="form-label">
+                Код системы продаж
+            </label> <select name="code_s" class="select form-select" id="id_code_s"> <option value="">---------</option> <option value="R">TIAS</option> <option value="E" selected>Вебсайт</option> <option value="I">Мобильное приложение</option> <option value="Z">Коробки</option> <option value="S">Коробки Вебсайт</option>
+
+</select> </div> <div id="div_id_code_m" class="mb-3"> <label
+                for="id_code_m" class="form-label">
+                Код модификации
+            </label> <input type="number" name="code_m" readonly class="numberinput form-control" id="id_code_m"> </div> <div id="div_id_modification" class="mb-3"> <label
+                for="id_modification" class="form-label">
+                Партнер / Модификация
+            </label> <input type="text" name="modification" maxlength="100" class="textinput form-control" id="id_modification"> </div> <div id="div_id_status" class="mb-3"> <label
+                for="id_status" class="form-label requiredField">
+                Статус продукта<span class="asteriskField">*</span> </label> <select name="status" class="select form-select" required id="id_status"> <option value="">---------</option> <option value="SCHEDULED">Планируется</option> <option value="IN_DEVELOPMENT">В разработке</option> <option value="LAUNCHING" selected>В процессе запуска</option> <option value="LAUNCHED">Запущен</option> <option value="SUSPENDED">Приостановлен</option> <option value="DISCONTINUED">Прекращен</option>
+
+</select> </div> <div id="div_id_debug_transfer_status" class="mb-3"> <label
+                for="id_debug_transfer_status" class="form-label">
+                Статус переноса
+            </label> <select name="debug_transfer_status" class="select form-select" disabled id="id_debug_transfer_status"> <option value="">---------</option> <option value="TRANSFER" selected>TRANSFER: Полный перенос (продукт и полисы)</option> <option value="MIGRATE">MIGRATE: Только полисы. Продукт не работает</option> <option value="NO_DOCUMENTATION">NO_DOCUMENTATION: Нет документации</option> <option value="NO_TRANSFER_STATUS">NO_TRANSFER_STATUS: Отсутствует статус переноса</option>
+
+</select> </div> <div  
+    class="mt-5" > <div class="mb-3"> <div id="div_id_tias" class="form-check"> <input type="checkbox" name="tias" class="checkboxinput form-check-input" id="id_tias"> <label for="id_tias" class="form-check-label">
+                    Интеграция с ТИАС
+                </label> </div> </div> </div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            background-color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50; /* Темно-серый цвет */
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f1c40f;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        /* Стиль для кнопок */
+        .status-button {
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            text-transform: uppercase;
+            border: none;
+            transition: all 0.3s ease-in-out;
+            display: inline-block;
+            margin: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 120px;
+        }
+
+        .status-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .status-yes {
+            background-color: #f1c40f;  /* Желтый */
+            color: white;
+        }
+
+        .status-no {
+            background-color: #bdc3c7;  /* Серый */
+            color: white;
+        }
+
+        .status-button.download {
+            background-color: #bdc3c7;  /* Серый для "Загрузить" */
+            color: white;
+        }
+
+        .status-button.loaded {
+            background-color: #f1c40f;  /* Желтый для "Загружен" */
+            color: white;
+        }
+
+        .status-button:focus {
+            outline: none;
+        }
+
+        /* Стиль для текста в "Прочие документы" */
+        td {
+            vertical-align: middle;
+        }
+
+        /* Стиль для столбца "Документы по продукту" */
+        td:nth-child(1) {
+            width: 40%;
+            text-align: left;
+        }
+
+        td:nth-child(2), td:nth-child(3), td:nth-child(4), td:nth-child(5) {
+            width: 15%;
+        }
+
+        td:nth-child(6) {
+            width: 20%;
+        }
+
+        /* Стиль для "Прочих документов" */
+        .other-documents td {
+            background-color: white;
+            color: #333;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            background-color: #2c3e50;
+            color: white;
+            font-size: 16px;
+            padding: 10px;
+        }
+
+        .footer span {
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Статусная модель</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Документы по продукту</th>
+                    <th>Загружен на сайт</th>
+                    <th>Утверждён приказом</th>
+                    <th>Реализован в ТИАС</th>
+                    <th>Выпущен в прод</th>
+                    <th>Загружен на сайт информация о продукте</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div class="card-body">
+                            <div id="div_id_doc_fsp" class="mb-3">
+                                <label for="id_doc_fsp" class="form-label">ФСП</label>
+                                <div>
+                                    <input type="file" name="doc_fsp" class="form-control" id="id_doc_fsp">
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="card-body">
+                            <div id="div_id_doc_policy_rules_tj" class="mb-3">
+                                <label for="id_doc_policy_rules_tj" class="form-label">Полисные условия TJ</label>
+                                <div>
+                                    <input type="file" name="doc_policy_rules_tj" class="form-control" id="id_doc_policy_rules_tj">
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="card-body">
+                            <div id="div_id_doc_policy_rules_ru" class="mb-3">
+                                <label for="id_doc_policy_rules_ru" class="form-label">Полисные условия RU</label>
+                                <div>
+                                    <input type="file" name="doc_policy_rules_ru" class="form-control" id="id_doc_policy_rules_ru">
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="card-body">
+                            <div id="div_id_doc_policy_blank_tj" class="mb-3">
+                                <label for="id_doc_policy_blank_tj" class="form-label">Бланк полиса TJ</label>
+                                <div>
+                                    <input type="file" name="doc_policy_blank_tj" class="form-control" id="id_doc_policy_blank_tj">
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <hr class="m-0">
+        <h6 class="card-header mb-0">Дополнительная информация <span class="small text-secondary">(видна только администраторам!)</span></h6>
+        <div class="card-body">
+            <div id="div_id_note" class="mb-3">
+                <label for="id_note" class="form-label">Комментарий</label>
+                <input type="text" name="note" value="Меняется калькулятор" maxlength="255" class="textinput form-control" id="id_note">
+            </div>
+            <div class="pt-5 mb-2">
+                <a href="/administration/products-map/" class="btn btn-secondary me-2 waves-effect waves-light">Отмена</a>
+                <button type="submit" class="btn btn-primary waves-effect waves-light">Сохранить изменения</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+</body>
+</html>

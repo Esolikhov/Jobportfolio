@@ -1,0 +1,188 @@
+<form method="post" enctype="multipart/form-data">
+    <div class="card-body">
+        <input type="hidden" name="csrfmiddlewaretoken" value="kiATxwQZvaFqd77gPGklLWO4faYXvpqmA6BCWr1f0KEoUXbIHGARei9FgVrbThj4">
+
+        <!-- Наименование продукта -->
+        <div id="div_id_name" class="mb-3">
+            <label for="id_name" class="form-label">Наименование продукта</label>
+            <input type="text" name="name" value="Автострахование онлайн" maxlength="80" class="textinput form-control" id="id_name">
+        </div>
+
+        <!-- Особенность продукта -->
+        <div id="div_id_feature" class="mb-3">
+            <label for="id_feature" class="form-label requiredField">Особенность продукта<span class="asteriskField">*</span></label>
+            <input type="text" name="feature" value="Автострахование на одно ТС" maxlength="100" class="textinput form-control" required id="id_feature">
+        </div>
+
+        <!-- Серия -->
+        <div id="div_id_series" class="mb-3">
+            <label for="id_series" class="form-label requiredField">Серия<span class="asteriskField">*</span></label>
+            <input type="text" name="series" value="ECI" maxlength="4" readonly class="textinput form-control" required id="id_series">
+        </div>
+
+        <!-- Тип клиента -->
+        <div id="div_id_client_type" class="mb-3">
+            <label for="id_client_type" class="form-label requiredField">Тип клиента<span class="asteriskField">*</span></label>
+            <select name="client_type" class="select form-select" id="id_client_type">
+                <option value="1" selected>Розничный</option>
+                <option value="2">Корпоративный</option>
+            </select>
+        </div>
+
+        <!-- Основной канал продаж -->
+        <div id="div_id_sales_channel" class="mb-3">
+            <label for="id_sales_channel" class="form-label requiredField">Основной канал продаж<span class="asteriskField">*</span></label>
+            <select name="sales_channel" class="select form-select" required id="id_sales_channel">
+                <option value="">---------</option>
+                <option value="1" selected>Собственный</option>
+                <option value="2">Банковский</option>
+                <option value="3">Партнерский</option>
+                <option value="4">Банковский, Партнерский</option>
+            </select>
+        </div>
+
+        <!-- Вид страхования -->
+        <div id="div_id_insurance_type" class="mb-3">
+            <label for="id_insurance_type" class="form-label">Вид страхования</label>
+            <select name="insurance_type" class="select form-select" disabled id="id_insurance_type">
+                <option value="">---------</option>
+                <option value="AUTO" selected>Автострахование</option>
+                <option value="TRAVEL">ВЗР</option>
+                <option value="CARGO">Грузы и перевозки</option>
+                <option value="PROPERTY">Имущество и ответственность</option>
+                <option value="COMBINED">Комбинированные риски</option>
+                <option value="NSIB">НСиБ</option>
+                <option value="SMR">СМР</option>
+                <option value="FINANCE">Финансовые риски</option>
+            </select>
+        </div>
+
+        <!-- Период оплаты -->
+        <div id="div_id_periodicity" class="mb-3">
+            <label for="id_periodicity" class="form-label">Период оплаты по умолчанию</label>
+            <select name="periodicity" class="select form-select" id="id_periodicity">
+                <option value="" selected>---------</option>
+                <option value="ONE_TIME">Единовременно</option>
+                <option value="YEARLY">Раз в год</option>
+                <option value="HALF_YEAR">Раз в полгода</option>
+                <option value="QUARTERLY">Ежеквартально</option>
+                <option value="MONTHLY">Ежемесячно</option>
+            </select>
+        </div>
+
+        <!-- Код особенности продукта -->
+        <div id="div_id_code_f" class="mb-3">
+            <label for="id_code_f" class="form-label requiredField">Код особенности продукта<span class="asteriskField">*</span></label>
+            <input type="text" name="code_f" value="CI" maxlength="2" readonly class="textinput form-control" required id="id_code_f">
+        </div>
+
+        <!-- Код системы продаж -->
+        <div id="div_id_code_s" class="mb-3">
+            <label for="id_code_s" class="form-label">Код системы продаж</label>
+            <select name="code_s" class="select form-select" id="id_code_s">
+                <option value="">---------</option>
+                <option value="R">TIAS</option>
+                <option value="E" selected>Вебсайт</option>
+                <option value="I">Мобильное приложение</option>
+                <option value="Z">Коробки</option>
+                <option value="S">Коробки Вебсайт</option>
+            </select>
+        </div>
+
+        <!-- Код модификации -->
+        <div id="div_id_code_m" class="mb-3">
+            <label for="id_code_m" class="form-label">Код модификации</label>
+            <input type="number" name="code_m" readonly class="numberinput form-control" id="id_code_m">
+        </div>
+
+        <!-- Партнер / Модификация -->
+        <div id="div_id_modification" class="mb-3">
+            <label for="id_modification" class="form-label">Партнер / Модификация</label>
+            <input type="text" name="modification" maxlength="100" class="textinput form-control" id="id_modification">
+        </div>
+
+        <!-- Статус продукта -->
+        <div id="div_id_status" class="mb-3">
+            <label for="id_status" class="form-label requiredField">Статус продукта<span class="asteriskField">*</span></label>
+            <select name="status" class="select form-select" required id="id_status">
+                <option value="">---------</option>
+                <option value="SCHEDULED">Планируется</option>
+                <option value="IN_DEVELOPMENT">В разработке</option>
+                <option value="LAUNCHING" selected>В процессе запуска</option>
+                <option value="LAUNCHED">Запущен</option>
+                <option value="SUSPENDED">Приостановлен</option>
+                <option value="DISCONTINUED">Прекращен</option>
+            </select>
+        </div>
+
+        <!-- Статус переноса -->
+        <div id="div_id_debug_transfer_status" class="mb-3">
+            <label for="id_debug_transfer_status" class="form-label">Статус переноса</label>
+            <select name="debug_transfer_status" class="select form-select" disabled id="id_debug_transfer_status">
+                <option value="">---------</option>
+                <option value="TRANSFER" selected>TRANSFER: Полный перенос (продукт и полисы)</option>
+                <option value="MIGRATE">MIGRATE: Только полисы. Продукт не работает</option>
+                <option value="NO_DOCUMENTATION">NO_DOCUMENTATION: Нет документации</option>
+                <option value="NO_TRANSFER_STATUS">NO_TRANSFER_STATUS: Отсутствует статус переноса</option>
+            </select>
+        </div>
+
+        <!-- Интеграция с ТИАС -->
+        <div class="mt-5">
+            <div class="mb-3">
+                <div id="div_id_tias" class="form-check">
+                    <input type="checkbox" name="tias" class="checkboxinput form-check-input" id="id_tias">
+                    <label for="id_tias" class="form-check-label">Интеграция с ТИАС</label>
+                </div>
+            </div>
+        </div>
+
+        <hr class="m-0">
+        <h6 class="card-header mb-0">Документы по продукту</h6>
+        <div class="card-body">
+            <div id="div_id_doc_fsp" class="mb-3">
+                <label for="id_doc_fsp" class="form-label">ФСП</label>
+                <div>
+                    <input type="file" name="doc_fsp" class="form-control" id="id_doc_fsp">
+                </div>
+            </div>
+            <div id="div_id_doc_policy_rules_ru" class="mb-3">
+                <label for="id_doc_policy_rules_ru" class="form-label">Полисные условия RU</label>
+                <div>
+                    <input type="file" name="doc_policy_rules_ru" class="form-control" id="id_doc_policy_rules_ru">
+                </div>
+            </div>
+            <div id="div_id_doc_policy_rules_tj" class="mb-3">
+                <label for="id_doc_policy_rules_tj" class="form-label">Полисные условия TJ</label>
+                <div>
+                    <input type="file" name="doc_policy_rules_tj" class="form-control" id="id_doc_policy_rules_tj">
+                </div>
+            </div>
+            <div id="div_id_doc_policy_blank_ru" class="mb-3">
+                <label for="id_doc_policy_blank_ru" class="form-label">Бланк полиса RU</label>
+                <div>
+                    <input type="file" name="doc_policy_blank_ru" class="form-control" id="id_doc_policy_blank_ru">
+                </div>
+            </div>
+            <div id="div_id_doc_policy_blank_tj" class="mb-3">
+                <label for="id_doc_policy_blank_tj" class="form-label">Бланк полиса TJ</label>
+                <div>
+                    <input type="file" name="doc_policy_blank_tj" class="form-control" id="id_doc_policy_blank_tj">
+                </div>
+            </div>
+        </div>
+
+        <hr class="m-0">
+        <h6 class="card-header mb-0">Дополнительная информация <span class="small text-secondary">(видна только администраторам!)</span></h6>
+        <div class="card-body">
+            <div id="div_id_note" class="mb-3">
+                <label for="id_note" class="form-label">Комментарий</label>
+                <input type="text" name="note" value="Меняется калькулятор" maxlength="255" class="textinput form-control" id="id_note">
+            </div>
+            <div class="pt-5 mb-2">
+                <a href="/administration/products-map/" class="btn btn-secondary me-2 waves-effect waves-light">Отмена</a>
+                <button type="submit" class="btn btn-primary waves-effect waves-light">Сохранить изменения</button>
+            </div>
+        </div>
+    </div>
+</form>

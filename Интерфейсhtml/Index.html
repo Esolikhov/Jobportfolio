@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <style>
+        /* Ваш оригинальный стиль */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            background-color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f1c40f;
+            color: white;
+        }
+
+        .status-button {
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            text-transform: uppercase;
+            border: none;
+            transition: all 0.3s ease-in-out;
+            display: inline-block;
+            margin: 5px;
+            width: 120px;
+        }
+
+        .status-yes {
+            background-color: #7f8c8d; /* Темно-серый для "Да" */
+            color: white;
+        }
+
+        .status-no {
+            background-color: #7f8c8d; /* Темно-серый для "Нет" */
+            color: white;
+        }
+
+        .status-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .status-button:focus {
+            outline: none;
+        }
+
+        .active {
+            background-color: #f1c40f; /* Желтый для активной кнопки */
+            color: white;
+        }
+
+        /* Кнопка удаления */
+        .delete-button {
+            background-color: white;
+            color: #e74c3c; /* Красный цвет текста для контраста */
+            border: 2px solid #e74c3c; /* Красная обводка */
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .delete-button:hover {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .delete-button:focus {
+            outline: none; /* Убираем фокусное кольцо */
+        }
+
+        .file-upload-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: flex-start; /* Сдвигаем элементы к началу */
+        }
+
+        .file-upload-container input {
+            flex-grow: 1;
+            max-width: 200px; /* Максимальная ширина для поля ввода */
+        }
+
+        .file-upload-container label {
+            font-weight: bold;
+            width: 150px;
+            text-align: left;
+        }
+
+        /* Дополнительные стили для выравнивания таблицы */
+        td {
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1></h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Документы по продукту</th>
+                    <th>Загружены на сайт</th>
+                    <th>Утверждён приказом</th>
+                    <th>Реализовано в ТИАС</th>
+                    <th>Вы впущены в прод</th>
+                    <th>Загружена на сайт информация о продукте</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div class="card-body">
+                            <div id="div_id_doc_fsp" class="mb-3">
+                                <label for="id_doc_fsp" class="form-label">ФСП</label>
+                                <div class="file-upload-container">
+                                    <input type="file" name="doc_fsp" class="form-control" id="id_doc_fsp">
+                                    <button class="delete-button" onclick="deleteFile('id_doc_fsp')">Удалить</button>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="card-body">
+                            <div id="div_id_doc_policy_rules_tj" class="mb-3">
+                                <label for="id_doc_policy_rules_tj" class="form-label">Полисные условия TJ</label>
+                                <div class="file-upload-container">
+                                    <input type="file" name="doc_policy_rules_tj" class="form-control" id="id_doc_policy_rules_tj">
+                                    <button class="delete-button" onclick="deleteFile('id_doc_policy_rules_tj')">Удалить</button>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="card-body">
+                            <div id="div_id_doc_policy_rules_ru" class="mb-3">
+                                <label for="id_doc_policy_rules_ru" class="form-label">Полисные условия RU</label>
+                                <div class="file-upload-container">
+                                    <input type="file" name="doc_policy_rules_ru" class="form-control" id="id_doc_policy_rules_ru">
+                                    <button class="delete-button" onclick="deleteFile('id_doc_policy_rules_ru')">Удалить</button>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="card-body">
+                            <div id="div_id_doc_policy_blank_tj" class="mb-3">
+                                <label for="id_doc_policy_blank_tj" class="form-label">Бланк полиса TJ</label>
+                                <div class="file-upload-container">
+                                    <input type="file" name="doc_policy_blank_tj" class="form-control" id="id_doc_policy_blank_tj">
+                                    <button class="delete-button" onclick="deleteFile('id_doc_policy_blank_tj')">Удалить</button>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                    <td><button class="status-button status-yes">Да</button><button class="status-button status-no">Нет</button></td>
+                </tr>
+            </tbody>
+        </table>
+
+       
+    <script>
+        // Обработка кликов на кнопки "Да" и "Нет"
+        document.querySelectorAll('.status-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const isYesButton = button.classList.contains('status-yes');
+                const isNoButton = button.classList.contains('status-no');
+                
+                if (button.classList.contains('active')) {
+                    // Подтверждение при повторном нажатии
+                    if (!confirm("Вы уверены, что хотите изменить статус?")) {
+                        return; // Отмена действия
+                    }
+                }
+
+                if (isYesButton) {
+                    // Если нажата кнопка "Да"
+                    button.classList.toggle('active');
+                    button.style.backgroundColor = button.classList.contains('active') ? '#27ae60' : '#7f8c8d'; // Светло-зеленый или серый
+                } else if (isNoButton) {
+                    // Если нажата кнопка "Нет"
+                    button.classList.toggle('active');
+                    button.style.backgroundColor = button.classList.contains('active') ? '#e74c3c' : '#7f8c8d'; // Светло-красный или серый
+                }
+            });
+        });
+
+        // Функция для удаления выбранного файла
+        function deleteFile(inputId) {
+            const fileInput = document.getElementById(inputId);
+            if (fileInput) {
+                fileInput.value = ""; // Сбрасываем выбранное значение
+                alert("Файл был удален.");
+            }
+        }
+    </script>
+</body>
+
+</html>
