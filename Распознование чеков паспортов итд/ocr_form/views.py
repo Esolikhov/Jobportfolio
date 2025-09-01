@@ -1,0 +1,1 @@
+command: python bott.py

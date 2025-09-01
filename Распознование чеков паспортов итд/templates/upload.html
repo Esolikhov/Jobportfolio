@@ -1,0 +1,25 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Распознавание паспорта</title>
+</head>
+<body>
+    <h3>Загрузите изображение паспорта</h3>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="image">
+        <button type="submit">Распознать</button>
+    </form>
+    <h4>Распознанный текст:</h4>
+    <pre>{{ text }}</pre>
+
+    <h4>Извлечённые данные:</h4>
+    <ul>
+      {% for key, value in fields.items %}
+        <li><strong>{{ key }}:</strong> {{ value }}</li>
+      {% endfor %}
+    </ul>
+</body>
+</html>
