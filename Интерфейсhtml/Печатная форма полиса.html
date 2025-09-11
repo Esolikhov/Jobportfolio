@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="tj">
+<head>
+  <meta charset="UTF-8">
+  <title>Полиси Суғуртавӣ</title>
+  <style>
+    @page { size: A4; margin: 0; }
+    body {
+      margin: 0;
+      background: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+    }
+    .page {
+      position: relative;
+      width: 210mm;
+      height: 297mm;
+      background: white;
+      box-shadow: 0 0 5mm rgba(0,0,0,0.2);
+      overflow: hidden;
+
+      /* фон с защитными линиями */
+      background-image: 
+        repeating-linear-gradient(170deg, rgba(29,45,123,0.05) 0, rgba(29,45,123,0.05) 0.2mm, transparent 0.2mm, transparent 7mm),
+        repeating-linear-gradient(10deg, rgba(29,45,123,0.05) 0, rgba(29,45,123,0.05) 0.2mm, transparent 0.2mm, transparent 7mm);
+      background-size: cover;
+    }
+
+    .border {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    .watermark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.08;
+      width: 120mm;
+      z-index: 0;
+    }
+
+    .header {
+      position: absolute;
+      top: 15mm;
+      left: 20mm;
+      font-size: 12px;
+      line-height: 1.4;
+      z-index: 10;
+    }
+    .details {
+      position: absolute;
+      top: 15mm;
+      right: 20mm;
+      font-size: 12px;
+      line-height: 1.4;
+      text-align: left;
+      z-index: 10;
+    }
+    .title {
+      position: absolute;
+      top: 65mm;
+      width: 100%;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      color: #1d2d7b;
+      z-index: 10;
+    }
+    .content {
+      position: absolute;
+      top: 90mm;
+      left: 25mm;
+      right: 25mm;
+      font-size: 14px;
+      line-height: 1.6;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- SVG рамка -->
+    <svg class="border" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 297" preserveAspectRatio="none">
+      <defs>
+        <!-- Элемент орнамента (цветочек) -->
+        <pattern id="flower" width="12" height="12" patternUnits="userSpaceOnUse">
+          <circle cx="6" cy="6" r="4" fill="none" stroke="#1d2d7b" stroke-width="1.2"/>
+          <circle cx="6" cy="6" r="2" fill="#1d2d7b"/>
+        </pattern>
+      </defs>
+      <!-- Прямоугольник с орнаментом -->
+      <rect x="3" y="3" width="204" height="291" fill="none" stroke="url(#flower)" stroke-width="6"/>
+    </svg>
+
+    <!-- Водяной знак -->
+    <svg class="watermark" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <path d="M100 10 L190 50 L160 180 L40 180 L10 50 Z"
+        fill="none" stroke="#1d2d7b" stroke-width="6"/>
+      <polyline points="60,100 90,130 140,70"
+        fill="none" stroke="#1d2d7b" stroke-width="10"/>
+    </svg>
+
+    <!-- Шапка -->
+    <div class="header">
+      ЧДММ «Ташкилоти суғуртавии Меҳнат»<br>
+      Суроға: ш. Душанбе, к. Ҳусей Холиқ, 47 А<br>
+      Телефон: (+992) 112 44 13 11<br>
+      Почтаи электронӣ: info@tfi.tj<br>
+      Режим кор: Дш–Ҷм 9:00–18:00
+    </div>
+
+    <!-- Реквизиты справа -->
+    <div class="details">
+      РМА: 030009471<br>
+      Сур. ҳ/қ: 2020292720000000000800<br>
+      Сур./м: 20482972418201<br>
+      РМБ: 350101820<br>
+      Бонк: ҶДММ ТКФ «Васл»
+    </div>
+
+    <!-- Заголовок -->
+    <div class="title">ПОЛИСИ СУҒУРТАВӢ</div>
+
+    <!-- Контент -->
+    <div class="content">
+      <!-- Здесь вставляются динамические данные полиса -->
+    </div>
+  </div>
+</body>
+</html>
