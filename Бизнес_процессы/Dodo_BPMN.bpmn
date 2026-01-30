@@ -1,0 +1,777 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1edq28r" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.43.1" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.24.0">
+  <bpmn:collaboration id="TZ_SOMONI">
+    <bpmn:extensionElements />
+    <bpmn:participant id="Participant_Dodo" name="" processRef="Process_Dodo_BPMN_TZ" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_Dodo_BPMN_TZ" name="Обработка заказа:доставка, самовывоз, заказ в пиццерии(мобильное приложение касса или киоск" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_1">
+      <bpmn:lane id="Lane_Client" name="Клиент">
+        <bpmn:flowNodeRef>GW_NoIngDecision</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_SelectLocation</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_Rate</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_ReceiveOrder</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_RetryDecision</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_RetryOrChange</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_ConfirmPay</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_NoIngDecision</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_SelectService</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_SelectPizza</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>StartEvent_Order</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_System" name="Приложение/Система">
+        <bpmn:flowNodeRef>ST_RequestFeedback</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Comp</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_AndJoin</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>MT_Bake</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_SendKitchen</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_10ahk33</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_MarkPayOnReceive</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_PayFailReason</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_PaySuccess</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_PayCardInit</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_PayQRInit</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_PushNoIng</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_CreateDraft</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Success</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_RecordPayment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_PaidOnline</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_PushComp</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_Rule60</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_PushCourierOut</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_AssignCourier</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_ReceiveType</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_PushReady</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_PrintTicket</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_AndSplit</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_PushAccepted</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_PaymentMethod</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_ServiceType</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_Alternatives</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Ingredients</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_CheckStopList</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_DetermineStore</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndErr_Pay</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Kitchen" name="Кухня">
+        <bpmn:flowNodeRef>MT_Pack</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_MarkReady</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Courier" name="Курьер">
+        <bpmn:flowNodeRef>MT_Deliver</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_TakePayment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_CourierAccept</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>BE_Timer60</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Cashier" name="Кассир/Выдача">
+        <bpmn:extensionElements>
+          <camunda:properties>
+            <camunda:property name="цувсу" value="ывасыв" />
+          </camunda:properties>
+        </bpmn:extensionElements>
+        <bpmn:flowNodeRef>UT_IssueOrder</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:manualTask id="MT_Deliver" name="Доставить заказ клиенту" />
+    <bpmn:serviceTask id="ST_RequestFeedback" name="Запросить обратную связь (оценка заказа)" />
+    <bpmn:endEvent id="End_Comp" />
+    <bpmn:userTask id="UT_TakePayment" name="Принять оплату (наличные/QR) при получении" />
+    <bpmn:userTask id="UT_CourierAccept" name="Курьер: принять доставку" />
+    <bpmn:parallelGateway id="GW_AndJoin" name="AND" />
+    <bpmn:manualTask id="MT_Bake" name="Приготовить (выпекание)" />
+    <bpmn:manualTask id="MT_Pack" name="Упаковать заказ" />
+    <bpmn:userTask id="UT_MarkReady" name="Отметить готовность" />
+    <bpmn:serviceTask id="ST_SendKitchen" name="Передать заказ на кухню" />
+    <bpmn:endEvent id="Event_10ahk33" name="Отмена заказа (нет ингредиентов)">
+      <bpmn:incoming>Flow_0ibl1os</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="ST_MarkPayOnReceive" name="Пометить: оплата при получении (наличные/QR у курьера/кассы)">
+      <bpmn:outgoing>Flow_1oow0l9</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="GW_PayFailReason" name="Причина отказа?">
+      <bpmn:incoming>Flow_1xs4lv7</bpmn:incoming>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_PaySuccess" name="Платёж успешен?">
+      <bpmn:incoming>Flow_1oow0l9</bpmn:incoming>
+      <bpmn:outgoing>F17_yes</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1xs4lv7</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="ST_PayCardInit" name="Оплата картой онлайн (инициировать)" />
+    <bpmn:serviceTask id="ST_PayQRInit" name="Оплата QR онлайн (Humo/Alif) — инициировать" />
+    <bpmn:serviceTask id="ST_PushNoIng" name="Push: нет ингредиентов" />
+    <bpmn:exclusiveGateway id="GW_NoIngDecision" name="Решение?">
+      <bpmn:outgoing>Flow_1uf15qq</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0ibl1os</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="ST_CreateDraft" name="Создать заказ и рассчитать стоимость" />
+    <bpmn:userTask id="UT_SelectLocation" name="Выбрать локацию (город/адрес)" />
+    <bpmn:endEvent id="End_Success" name="Завершение (заказ выполнен)" />
+    <bpmn:userTask id="UT_Rate" name="Оценить заказ" />
+    <bpmn:userTask id="UT_ReceiveOrder" name="Получить заказ" />
+    <bpmn:serviceTask id="ST_RecordPayment" name="Зафиксировать оплату и закрыть чек" />
+    <bpmn:exclusiveGateway id="GW_PaidOnline" name="Оплата была онлайн?" />
+    <bpmn:serviceTask id="ST_PushComp" name="Push: компенсация применена" />
+    <bpmn:serviceTask id="ST_Rule60" name="Применить правило 60 минут (компенсация)" />
+    <bpmn:serviceTask id="ST_PushCourierOut" name="Push: курьер выехал" />
+    <bpmn:serviceTask id="ST_AssignCourier" name="Назначить курьера" />
+    <bpmn:userTask id="UT_IssueOrder" name="Выдать заказ (касса/выдача)" />
+    <bpmn:exclusiveGateway id="GW_ReceiveType" name="Способ получения?" />
+    <bpmn:serviceTask id="ST_PushReady" name="Push: заказ готов" />
+    <bpmn:serviceTask id="ST_PrintTicket" name="Сформировать чек/талон/производственное задание" />
+    <bpmn:parallelGateway id="GW_AndSplit" name="AND">
+      <bpmn:outgoing>F24_b1</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:serviceTask id="ST_PushAccepted" name="Push: заказ принят / готовим" />
+    <bpmn:exclusiveGateway id="GW_RetryDecision" name="Повтор/Отмена?">
+      <bpmn:outgoing>Flow_0p1lttn</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="UT_RetryOrChange" name="Повторить оплату / выбрать другой способ?" />
+    <bpmn:exclusiveGateway id="GW_PaymentMethod" name="Способ оплаты?" />
+    <bpmn:userTask id="UT_ConfirmPay" name="Подтвердить заказ и выбрать способ оплаты">
+      <bpmn:incoming>Flow_1uf15qq</bpmn:incoming>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="GW_ServiceType" name="Тип обслуживания?" />
+    <bpmn:userTask id="UT_NoIngDecision" name="Решение клиента (замена/смена локации/отмена)">
+      <bpmn:incoming>F13_del</bpmn:incoming>
+      <bpmn:incoming>F13_store</bpmn:incoming>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="ST_Alternatives" name="Сформировать альтернативы (замена/другая пицца/другая локация)" />
+    <bpmn:exclusiveGateway id="GW_Ingredients" name="Ингредиенты доступны?" />
+    <bpmn:serviceTask id="ST_CheckStopList" name="Проверить стоп-лист (ингредиенты по локации)" />
+    <bpmn:serviceTask id="ST_DetermineStore" name="Определить пиццерию-исполнителя" />
+    <bpmn:userTask id="UT_SelectService" name="Выбрать тип обслуживания (доставка/самовывоз/в пиццерии)" />
+    <bpmn:userTask id="UT_SelectPizza" name="Выбрать пиццу и параметры" />
+    <bpmn:startEvent id="StartEvent_Order" name="Начало" />
+    <bpmn:endEvent id="EndErr_Pay" name="Отмена заказа (оплата не выполнена)">
+      <bpmn:incoming>Flow_0p1lttn</bpmn:incoming>
+      <bpmn:errorEventDefinition />
+    </bpmn:endEvent>
+    <bpmn:boundaryEvent id="BE_Timer60" name="Курьер не успел за 60 минут" cancelActivity="false" attachedToRef="MT_Deliver">
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT60M</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="F31" sourceRef="ST_PushCourierOut" targetRef="MT_Deliver" />
+    <bpmn:sequenceFlow id="F32" sourceRef="MT_Deliver" targetRef="GW_PaidOnline" />
+    <bpmn:sequenceFlow id="F36" sourceRef="UT_ReceiveOrder" targetRef="ST_RequestFeedback" />
+    <bpmn:sequenceFlow id="F37" sourceRef="ST_RequestFeedback" targetRef="UT_Rate" />
+    <bpmn:sequenceFlow id="FT3" sourceRef="ST_PushComp" targetRef="End_Comp" />
+    <bpmn:sequenceFlow id="F33_no" name="Нет" sourceRef="GW_PaidOnline" targetRef="UT_TakePayment">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">Нет</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F34" sourceRef="UT_TakePayment" targetRef="ST_RecordPayment" />
+    <bpmn:sequenceFlow id="F29" sourceRef="ST_AssignCourier" targetRef="UT_CourierAccept" />
+    <bpmn:sequenceFlow id="F30" sourceRef="UT_CourierAccept" targetRef="ST_PushCourierOut" />
+    <bpmn:sequenceFlow id="F24_b4" sourceRef="UT_MarkReady" targetRef="GW_AndJoin" />
+    <bpmn:sequenceFlow id="F24_a" sourceRef="ST_PrintTicket" targetRef="GW_AndJoin" />
+    <bpmn:sequenceFlow id="F25" sourceRef="GW_AndJoin" targetRef="ST_PushReady" />
+    <bpmn:sequenceFlow id="F24_b1" sourceRef="GW_AndSplit" targetRef="MT_Bake" />
+    <bpmn:sequenceFlow id="F24_b2" sourceRef="MT_Bake" targetRef="MT_Pack" />
+    <bpmn:sequenceFlow id="F24_b3" sourceRef="MT_Pack" targetRef="UT_MarkReady" />
+    <bpmn:sequenceFlow id="F23_b" sourceRef="GW_AndSplit" targetRef="ST_SendKitchen" />
+    <bpmn:sequenceFlow id="Flow_0ibl1os" sourceRef="GW_NoIngDecision" targetRef="Event_10ahk33" />
+    <bpmn:sequenceFlow id="F15_cod" name="Оплата при получении" sourceRef="GW_PaymentMethod" targetRef="ST_MarkPayOnReceive">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">Оплата при получении</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_1oow0l9" sourceRef="ST_MarkPayOnReceive" targetRef="GW_PaySuccess" />
+    <bpmn:sequenceFlow id="Flow_1xs4lv7" name="Нет" sourceRef="GW_PaySuccess" targetRef="GW_PayFailReason" />
+    <bpmn:sequenceFlow id="F18_funds" name="Недостаточно средств" sourceRef="GW_PayFailReason" targetRef="UT_RetryOrChange">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">Недостаточно средств</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F16_card" sourceRef="ST_PayCardInit" targetRef="GW_PaySuccess" />
+    <bpmn:sequenceFlow id="F16_qr" sourceRef="ST_PayQRInit" targetRef="GW_PaySuccess" />
+    <bpmn:sequenceFlow id="F17_yes" name="Да" sourceRef="GW_PaySuccess" targetRef="ST_PushAccepted">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">Да</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F15_card" name="Карта онлайн" sourceRef="GW_PaymentMethod" targetRef="ST_PayCardInit">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">Карта онлайн</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F15_qr" name="QR онлайн (Humo/Alif)" sourceRef="GW_PaymentMethod" targetRef="ST_PayQRInit">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">QR онлайн (Humo/Alif)</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F09" sourceRef="ST_Alternatives" targetRef="ST_PushNoIng" />
+    <bpmn:sequenceFlow id="F10" sourceRef="ST_PushNoIng" targetRef="UT_NoIngDecision" />
+    <bpmn:sequenceFlow id="F11" sourceRef="UT_NoIngDecision" targetRef="GW_NoIngDecision" />
+    <bpmn:sequenceFlow id="Flow_1uf15qq" sourceRef="GW_NoIngDecision" targetRef="UT_ConfirmPay" />
+    <bpmn:sequenceFlow id="F04" sourceRef="UT_SelectService" targetRef="ST_CreateDraft" />
+    <bpmn:sequenceFlow id="F05" sourceRef="ST_CreateDraft" targetRef="ST_DetermineStore" />
+    <bpmn:sequenceFlow id="F02" sourceRef="UT_SelectPizza" targetRef="UT_SelectLocation" />
+    <bpmn:sequenceFlow id="F03" sourceRef="UT_SelectLocation" targetRef="UT_SelectService" />
+    <bpmn:sequenceFlow id="F38" sourceRef="UT_Rate" targetRef="End_Success" />
+    <bpmn:sequenceFlow id="F35" sourceRef="ST_RecordPayment" targetRef="UT_ReceiveOrder" />
+    <bpmn:sequenceFlow id="F33_yes" name="Да" sourceRef="GW_PaidOnline" targetRef="UT_ReceiveOrder">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">Да</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F28" sourceRef="UT_IssueOrder" targetRef="UT_ReceiveOrder" />
+    <bpmn:sequenceFlow id="FT2" sourceRef="ST_Rule60" targetRef="ST_PushComp" />
+    <bpmn:sequenceFlow id="FT1" sourceRef="BE_Timer60" targetRef="ST_Rule60" />
+    <bpmn:sequenceFlow id="F27_del" name="Доставка" sourceRef="GW_ReceiveType" targetRef="ST_AssignCourier">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">Доставка</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F27_issue" name="Самовывоз" sourceRef="GW_ReceiveType" targetRef="UT_IssueOrder">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">Самовывоз / В пиццерии</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F26" sourceRef="ST_PushReady" targetRef="GW_ReceiveType" />
+    <bpmn:sequenceFlow id="F23_a" sourceRef="GW_AndSplit" targetRef="ST_PrintTicket" />
+    <bpmn:sequenceFlow id="F22" sourceRef="ST_PushAccepted" targetRef="GW_AndSplit" />
+    <bpmn:sequenceFlow id="F19" sourceRef="UT_RetryOrChange" targetRef="GW_RetryDecision" />
+    <bpmn:sequenceFlow id="Flow_0p1lttn" name="Отмена" sourceRef="GW_RetryDecision" targetRef="EndErr_Pay" />
+    <bpmn:sequenceFlow id="F14" sourceRef="UT_ConfirmPay" targetRef="GW_PaymentMethod" />
+    <bpmn:sequenceFlow id="F08_yes" name="Да" sourceRef="GW_Ingredients" targetRef="GW_ServiceType">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">Да</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F13_store" name="Заказ в пиццерии (касса/киоск)" sourceRef="GW_ServiceType" targetRef="UT_NoIngDecision">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">Заказ в пиццерии (касса/киоск)</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F13_del" name="Онлайн-заказ с доставкой/самовывоз" sourceRef="GW_ServiceType" targetRef="UT_NoIngDecision">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">Онлайн-заказ с доставкой</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F08_no" name="Нет" sourceRef="GW_Ingredients" targetRef="ST_Alternatives">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">Нет</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F07" sourceRef="ST_CheckStopList" targetRef="GW_Ingredients" />
+    <bpmn:sequenceFlow id="F06" sourceRef="ST_DetermineStore" targetRef="ST_CheckStopList" />
+    <bpmn:sequenceFlow id="F01" sourceRef="StartEvent_Order" targetRef="UT_SelectPizza" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="TZ_SOMONI">
+      <bpmndi:BPMNShape id="Participant_Dodo_di" bpmnElement="Participant_Dodo" isHorizontal="true">
+        <dc:Bounds x="151" y="80" width="12498" height="960" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Cashier_di" bpmnElement="Lane_Cashier" isHorizontal="true">
+        <dc:Bounds x="151" y="880" width="12498" height="160" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Courier_di" bpmnElement="Lane_Courier" isHorizontal="true">
+        <dc:Bounds x="151" y="740" width="12498" height="140" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Kitchen_di" bpmnElement="Lane_Kitchen" isHorizontal="true">
+        <dc:Bounds x="151" y="580" width="12498" height="160" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_System_di" bpmnElement="Lane_System" isHorizontal="true">
+        <dc:Bounds x="151" y="240" width="12498" height="340" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Client_di" bpmnElement="Lane_Client" isHorizontal="true">
+        <dc:Bounds x="151" y="80" width="12498" height="160" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="MT_Deliver_di" bpmnElement="MT_Deliver">
+        <dc:Bounds x="9593" y="760" width="240" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_RequestFeedback_di" bpmnElement="ST_RequestFeedback">
+        <dc:Bounds x="11853" y="370" width="320" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Comp_di" bpmnElement="End_Comp">
+        <dc:Bounds x="10953" y="412" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="8137" y="359" width="67" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_TakePayment_di" bpmnElement="UT_TakePayment">
+        <dc:Bounds x="10631" y="770" width="320" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_CourierAccept_di" bpmnElement="UT_CourierAccept">
+        <dc:Bounds x="9173" y="778" width="240" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_AndJoin_di" bpmnElement="GW_AndJoin" isMarkerVisible="true">
+        <dc:Bounds x="7478" y="295" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="7492" y="271" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="MT_Bake_di" bpmnElement="MT_Bake">
+        <dc:Bounds x="6673" y="460" width="260" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="MT_Pack_di" bpmnElement="MT_Pack">
+        <dc:Bounds x="6993" y="620" width="220" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_MarkReady_di" bpmnElement="UT_MarkReady">
+        <dc:Bounds x="7393" y="620" width="220" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_SendKitchen_di" bpmnElement="ST_SendKitchen">
+        <dc:Bounds x="6673" y="370" width="260" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1l0ycg4_di" bpmnElement="Event_10ahk33">
+        <dc:Bounds x="3783" y="315" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3763" y="358" width="76" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_MarkPayOnReceive_di" bpmnElement="ST_MarkPayOnReceive">
+        <dc:Bounds x="4703" y="440" width="460" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_PayFailReason_di" bpmnElement="GW_PayFailReason" isMarkerVisible="true">
+        <dc:Bounds x="5236" y="455" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5218" y="505" width="86" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_PaySuccess_di" bpmnElement="GW_PaySuccess" isMarkerVisible="true">
+        <dc:Bounds x="5176" y="375" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5126" y="406" width="50" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_PayCardInit_di" bpmnElement="ST_PayCardInit">
+        <dc:Bounds x="4793" y="280" width="280" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_PayQRInit_di" bpmnElement="ST_PayQRInit">
+        <dc:Bounds x="4753" y="360" width="360" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_PushNoIng_di" bpmnElement="ST_PushNoIng">
+        <dc:Bounds x="3443" y="390" width="220" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_NoIngDecision_di" bpmnElement="GW_NoIngDecision" isMarkerVisible="true">
+        <dc:Bounds x="3776" y="135" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3776" y="116" width="50" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_CreateDraft_di" bpmnElement="ST_CreateDraft">
+        <dc:Bounds x="1411" y="280" width="300" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_SelectLocation_di" bpmnElement="UT_SelectLocation">
+        <dc:Bounds x="731" y="120" width="260" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Success_di" bpmnElement="End_Success">
+        <dc:Bounds x="12373" y="315" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="12347" y="351" width="89" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_Rate_di" bpmnElement="UT_Rate">
+        <dc:Bounds x="11913" y="120" width="200" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_ReceiveOrder_di" bpmnElement="UT_ReceiveOrder">
+        <dc:Bounds x="11513" y="120" width="200" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_RecordPayment_di" bpmnElement="ST_RecordPayment">
+        <dc:Bounds x="11093" y="280" width="320" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_PaidOnline_di" bpmnElement="GW_PaidOnline" isMarkerVisible="true">
+        <dc:Bounds x="10193" y="295" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="10185" y="345" width="67" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_PushComp_di" bpmnElement="ST_PushComp">
+        <dc:Bounds x="10633" y="390" width="260" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_Rule60_di" bpmnElement="ST_Rule60">
+        <dc:Bounds x="10193" y="390" width="320" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_PushCourierOut_di" bpmnElement="ST_PushCourierOut">
+        <dc:Bounds x="9193" y="390" width="200" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_AssignCourier_di" bpmnElement="ST_AssignCourier">
+        <dc:Bounds x="8793" y="390" width="220" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_IssueOrder_di" bpmnElement="UT_IssueOrder">
+        <dc:Bounds x="8793" y="930" width="260" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_ReceiveType_di" bpmnElement="GW_ReceiveType" isMarkerVisible="true">
+        <dc:Bounds x="8413" y="295" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="8408" y="345" width="60" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_PushReady_di" bpmnElement="ST_PushReady">
+        <dc:Bounds x="7993" y="280" width="220" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_PrintTicket_di" bpmnElement="ST_PrintTicket">
+        <dc:Bounds x="6593" y="280" width="420" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_AndSplit_di" bpmnElement="GW_AndSplit" isMarkerVisible="true">
+        <dc:Bounds x="6193" y="295" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="6207" y="271" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_PushAccepted_di" bpmnElement="ST_PushAccepted">
+        <dc:Bounds x="5753" y="280" width="240" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_RetryDecision_di" bpmnElement="GW_RetryDecision" isMarkerVisible="true">
+        <dc:Bounds x="5783" y="142" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5764" y="118" width="87" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_RetryOrChange_di" bpmnElement="UT_RetryOrChange">
+        <dc:Bounds x="5333" y="120" width="360" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_PaymentMethod_di" bpmnElement="GW_PaymentMethod" isMarkerVisible="true">
+        <dc:Bounds x="4373" y="295" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4356" y="345" width="84" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_ConfirmPay_di" bpmnElement="UT_ConfirmPay">
+        <dc:Bounds x="3853" y="120" width="340" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_ServiceType_di" bpmnElement="GW_ServiceType" isMarkerVisible="true">
+        <dc:Bounds x="3013" y="295" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2950" y="278" width="81" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_NoIngDecision_di" bpmnElement="UT_NoIngDecision">
+        <dc:Bounds x="3373" y="120" width="360" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_Alternatives_di" bpmnElement="ST_Alternatives">
+        <dc:Bounds x="2673" y="390" width="420" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Ingredients_di" bpmnElement="GW_Ingredients" isMarkerVisible="true">
+        <dc:Bounds x="2573" y="295" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2563" y="258" width="69" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_CheckStopList_di" bpmnElement="ST_CheckStopList">
+        <dc:Bounds x="2153" y="280" width="360" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_DetermineStore_di" bpmnElement="ST_DetermineStore">
+        <dc:Bounds x="1753" y="280" width="320" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_SelectService_di" bpmnElement="UT_SelectService">
+        <dc:Bounds x="1053" y="120" width="360" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_SelectPizza_di" bpmnElement="UT_SelectPizza">
+        <dc:Bounds x="433" y="120" width="240" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_Order_di" bpmnElement="StartEvent_Order">
+        <dc:Bounds x="233" y="142" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="233" y="178" width="37" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndErr_Pay_di" bpmnElement="EndErr_Pay">
+        <dc:Bounds x="6052" y="412" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="6034" y="460" width="76" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BE_Timer60_di" bpmnElement="BE_Timer60">
+        <dc:Bounds x="9833" y="820" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="9809" y="856" width="85" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="F31_di" bpmnElement="F31">
+        <di:waypoint x="9393" y="430" />
+        <di:waypoint x="9713" y="430" />
+        <di:waypoint x="9713" y="760" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F32_di" bpmnElement="F32">
+        <di:waypoint x="9833" y="800" />
+        <di:waypoint x="10013" y="800" />
+        <di:waypoint x="10013" y="320" />
+        <di:waypoint x="10193" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F36_di" bpmnElement="F36">
+        <di:waypoint x="11713" y="160" />
+        <di:waypoint x="11813" y="160" />
+        <di:waypoint x="11813" y="410" />
+        <di:waypoint x="11853" y="410" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F37_di" bpmnElement="F37">
+        <di:waypoint x="12013" y="370" />
+        <di:waypoint x="12013" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="FT3_di" bpmnElement="FT3">
+        <di:waypoint x="10893" y="430" />
+        <di:waypoint x="10953" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F33_no_di" bpmnElement="F33_no">
+        <di:waypoint x="10243" y="320" />
+        <di:waypoint x="10581" y="320" />
+        <di:waypoint x="10581" y="810" />
+        <di:waypoint x="10631" y="810" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="10587" y="556" width="19" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F34_di" bpmnElement="F34">
+        <di:waypoint x="10951" y="810" />
+        <di:waypoint x="11003" y="810" />
+        <di:waypoint x="11003" y="320" />
+        <di:waypoint x="11093" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F29_di" bpmnElement="F29">
+        <di:waypoint x="8903" y="470" />
+        <di:waypoint x="8903" y="818" />
+        <di:waypoint x="9173" y="818" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F30_di" bpmnElement="F30">
+        <di:waypoint x="9293" y="778" />
+        <di:waypoint x="9293" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F24_b4_di" bpmnElement="F24_b4">
+        <di:waypoint x="7503" y="620" />
+        <di:waypoint x="7503" y="345" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F24_a_di" bpmnElement="F24_a">
+        <di:waypoint x="7013" y="320" />
+        <di:waypoint x="7478" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F25_di" bpmnElement="F25">
+        <di:waypoint x="7528" y="320" />
+        <di:waypoint x="7993" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F24_b1_di" bpmnElement="F24_b1">
+        <di:waypoint x="6218" y="345" />
+        <di:waypoint x="6218" y="500" />
+        <di:waypoint x="6673" y="500" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F24_b2_di" bpmnElement="F24_b2">
+        <di:waypoint x="6933" y="500" />
+        <di:waypoint x="7103" y="500" />
+        <di:waypoint x="7103" y="620" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F24_b3_di" bpmnElement="F24_b3">
+        <di:waypoint x="7213" y="660" />
+        <di:waypoint x="7393" y="660" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F23_b_di" bpmnElement="F23_b">
+        <di:waypoint x="6243" y="320" />
+        <di:waypoint x="6418" y="320" />
+        <di:waypoint x="6418" y="410" />
+        <di:waypoint x="6673" y="410" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ibl1os_di" bpmnElement="Flow_0ibl1os">
+        <di:waypoint x="3801" y="185" />
+        <di:waypoint x="3801" y="315" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F15_cod_di" bpmnElement="F15_cod">
+        <di:waypoint x="4423" y="320" />
+        <di:waypoint x="4588" y="320" />
+        <di:waypoint x="4588" y="480" />
+        <di:waypoint x="4703" y="480" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4630" y="446" width="59" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1oow0l9_di" bpmnElement="Flow_1oow0l9">
+        <di:waypoint x="5163" y="480" />
+        <di:waypoint x="5201" y="480" />
+        <di:waypoint x="5201" y="425" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1xs4lv7_di" bpmnElement="Flow_1xs4lv7">
+        <di:waypoint x="5226" y="400" />
+        <di:waypoint x="5261" y="400" />
+        <di:waypoint x="5261" y="455" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5241" y="423" width="19" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F18_funds_di" bpmnElement="F18_funds">
+        <di:waypoint x="5286" y="480" />
+        <di:waypoint x="5311" y="480" />
+        <di:waypoint x="5311" y="160" />
+        <di:waypoint x="5333" y="160" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5234" y="171" width="73" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F16_card_di" bpmnElement="F16_card">
+        <di:waypoint x="5073" y="320" />
+        <di:waypoint x="5201" y="320" />
+        <di:waypoint x="5201" y="375" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F16_qr_di" bpmnElement="F16_qr">
+        <di:waypoint x="5113" y="400" />
+        <di:waypoint x="5176" y="400" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F17_yes_di" bpmnElement="F17_yes">
+        <di:waypoint x="5226" y="400" />
+        <di:waypoint x="5261" y="400" />
+        <di:waypoint x="5261" y="320" />
+        <di:waypoint x="5753" y="320" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5615" y="303" width="14" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F15_card_di" bpmnElement="F15_card">
+        <di:waypoint x="4423" y="320" />
+        <di:waypoint x="4793" y="320" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4636" y="295" width="70" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F15_qr_di" bpmnElement="F15_qr">
+        <di:waypoint x="4423" y="320" />
+        <di:waypoint x="4588" y="320" />
+        <di:waypoint x="4588" y="400" />
+        <di:waypoint x="4753" y="400" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4644" y="366" width="54" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F09_di" bpmnElement="F09">
+        <di:waypoint x="3093" y="430" />
+        <di:waypoint x="3443" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F10_di" bpmnElement="F10">
+        <di:waypoint x="3541" y="390" />
+        <di:waypoint x="3541" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F11_di" bpmnElement="F11">
+        <di:waypoint x="3733" y="162" />
+        <di:waypoint x="3778" y="162" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1uf15qq_di" bpmnElement="Flow_1uf15qq">
+        <di:waypoint x="3826" y="160" />
+        <di:waypoint x="3853" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F04_di" bpmnElement="F04">
+        <di:waypoint x="1413" y="160" />
+        <di:waypoint x="1561" y="160" />
+        <di:waypoint x="1561" y="280" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F05_di" bpmnElement="F05">
+        <di:waypoint x="1711" y="320" />
+        <di:waypoint x="1753" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F02_di" bpmnElement="F02">
+        <di:waypoint x="673" y="160" />
+        <di:waypoint x="731" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F03_di" bpmnElement="F03">
+        <di:waypoint x="991" y="160" />
+        <di:waypoint x="1053" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F38_di" bpmnElement="F38">
+        <di:waypoint x="12113" y="160" />
+        <di:waypoint x="12391" y="160" />
+        <di:waypoint x="12391" y="315" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F35_di" bpmnElement="F35">
+        <di:waypoint x="11413" y="320" />
+        <di:waypoint x="11613" y="320" />
+        <di:waypoint x="11613" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F33_yes_di" bpmnElement="F33_yes">
+        <di:waypoint x="10243" y="320" />
+        <di:waypoint x="10878" y="320" />
+        <di:waypoint x="10878" y="160" />
+        <di:waypoint x="11513" y="160" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="10834" y="303" width="14" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F28_di" bpmnElement="F28">
+        <di:waypoint x="9053" y="960" />
+        <di:waypoint x="9541" y="960" />
+        <di:waypoint x="9541" y="160" />
+        <di:waypoint x="11513" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="FT2_di" bpmnElement="FT2">
+        <di:waypoint x="10513" y="430" />
+        <di:waypoint x="10633" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="FT1_di" bpmnElement="FT1">
+        <di:waypoint x="9869" y="838" />
+        <di:waypoint x="10031" y="838" />
+        <di:waypoint x="10031" y="430" />
+        <di:waypoint x="10193" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F27_del_di" bpmnElement="F27_del">
+        <di:waypoint x="8463" y="320" />
+        <di:waypoint x="8628" y="320" />
+        <di:waypoint x="8628" y="430" />
+        <di:waypoint x="8793" y="430" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="8635" y="365" width="50" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F27_issue_di" bpmnElement="F27_issue">
+        <di:waypoint x="8463" y="320" />
+        <di:waypoint x="8628" y="320" />
+        <di:waypoint x="8628" y="970" />
+        <di:waypoint x="8793" y="970" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="8630" y="635" width="60" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F26_di" bpmnElement="F26">
+        <di:waypoint x="8213" y="320" />
+        <di:waypoint x="8413" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F23_a_di" bpmnElement="F23_a">
+        <di:waypoint x="6243" y="320" />
+        <di:waypoint x="6593" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F22_di" bpmnElement="F22">
+        <di:waypoint x="5993" y="320" />
+        <di:waypoint x="6193" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F19_di" bpmnElement="F19">
+        <di:waypoint x="5693" y="170" />
+        <di:waypoint x="5786" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0p1lttn_di" bpmnElement="Flow_0p1lttn">
+        <di:waypoint x="5833" y="167" />
+        <di:waypoint x="6070" y="167" />
+        <di:waypoint x="6070" y="412" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5932" y="149" width="40" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F14_di" bpmnElement="F14">
+        <di:waypoint x="4193" y="160" />
+        <di:waypoint x="4283" y="160" />
+        <di:waypoint x="4283" y="320" />
+        <di:waypoint x="4373" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F08_yes_di" bpmnElement="F08_yes">
+        <di:waypoint x="2623" y="320" />
+        <di:waypoint x="3013" y="320" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2811" y="295" width="14" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F13_store_di" bpmnElement="F13_store">
+        <di:waypoint x="3063" y="320" />
+        <di:waypoint x="3281" y="320" />
+        <di:waypoint x="3281" y="160" />
+        <di:waypoint x="3373" y="160" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3127" y="272" width="68" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F13_del_di" bpmnElement="F13_del">
+        <di:waypoint x="3038" y="295" />
+        <di:waypoint x="3038" y="100" />
+        <di:waypoint x="3541" y="100" />
+        <di:waypoint x="3541" y="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2948" y="103" width="83" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F08_no_di" bpmnElement="F08_no">
+        <di:waypoint x="2598" y="345" />
+        <di:waypoint x="2598" y="430" />
+        <di:waypoint x="2673" y="430" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2604" y="378" width="19" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F07_di" bpmnElement="F07">
+        <di:waypoint x="2513" y="320" />
+        <di:waypoint x="2573" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F06_di" bpmnElement="F06">
+        <di:waypoint x="2073" y="320" />
+        <di:waypoint x="2153" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F01_di" bpmnElement="F01">
+        <di:waypoint x="269" y="160" />
+        <di:waypoint x="433" y="160" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
