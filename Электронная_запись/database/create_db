@@ -1,0 +1,125 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import sqlite3
+from datetime import datetime, timedelta
+
+# Создаём базу данных
+conn = sqlite3.connect('dental_clinic.db')
+cursor = conn.cursor()
+
+print("Создание базы данных...")
+
+# Таблица врачей
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS doctors (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    specialization TEXT NOT NULL,
+    room TEXT NOT NULL,
+    is_active INTEGER DEFAULT 1,
+    status TEXT DEFAULT 'свободен'
+)
+''')
+
+# Таблица записей
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS appointments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    patient_name TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    doctor_id INTEGER NOT NULL,
+    appointment_date TEXT NOT NULL,
+    appointment_time TEXT NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    is_walk_in INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'активна',
+    FOREIGN KEY (doctor_id) REFERENCES doctors(id)
+)
+''')
+
+# Таблица очереди
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS queue (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    appointment_id INTEGER,
+    patient_name TEXT NOT NULL,
+    doctor_id INTEGER NOT NULL,
+    room TEXT NOT NULL,
+    status TEXT DEFAULT 'вызван',
+    called_at TEXT,
+    started_at TEXT,
+    finished_at TEXT,
+    FOREIGN KEY (appointment_id) REFERENCES appointments(id),
+    FOREIGN KEY (doctor_id) REFERENCES doctors(id)
+)
+''')
+
+print("Таблицы созданы.")
+
+# Добавление врачей
+print("Добавление врачей...")
+
+cursor.execute("DELETE FROM doctors")
+doctors = [
+    ('Кенчаев Зафар Комилович', 'Терапевт - хирург', 'Кабинет 1', 1, 'свободен'),
+    ('Икромов Низомиддин Вохидович', 'Терапевт - ортодонт', 'Кабинет 2', 1, 'свободен')
+]
+
+cursor.executemany('''
+INSERT INTO doctors (name, specialization, room, is_active, status) 
+VALUES (?, ?, ?, ?, ?)
+''', doctors)
+
+print(f"Добавлено врачей: {len(doctors)}")
+
+# Добавление тестовых записей
+print("Добавление тестовых записей...")
+
+today = datetime.now()
+test_appointments = []
+
+for day_offset in range(7):
+    date = (today + timedelta(days=day_offset)).strftime('%Y-%m-%d')
+    
+    # По 3-4 записей в день
+    for hour in [9, 11, 14, 16]:
+        doctor_id = ((hour // 2) % 2) + 1
+        patient_num = len(test_appointments) + 1
+        
+        test_appointments.append((
+            f'Пациент {patient_num}',
+            f'+992 92 {patient_num:03d} {patient_num*10:04d}',
+            doctor_id,
+            date,
+            f'{hour:02d}:00',
+            datetime.now().isoformat(),
+            0,
+            'активна'
+        ))
+
+cursor.executemany('''
+INSERT INTO appointments (patient_name, phone, doctor_id, appointment_date, appointment_time, created_at, is_walk_in, status)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+''', test_appointments)
+
+print(f"Добавлено записей: {len(test_appointments)}")
+
+# Индексы
+print("Создание индексов...")
+cursor.execute('CREATE INDEX IF NOT EXISTS idx_appointments_date ON appointments(appointment_date)')
+cursor.execute('CREATE INDEX IF NOT EXISTS idx_appointments_doctor ON appointments(doctor_id)')
+cursor.execute('CREATE INDEX IF NOT EXISTS idx_queue_status ON queue(status)')
+cursor.execute('CREATE INDEX IF NOT EXISTS idx_queue_doctor ON queue(doctor_id)')
+
+conn.commit()
+conn.close()
+
+print("\n" + "="*50)
+print("БАЗА ДАННЫХ СОЗДАНА УСПЕШНО!")
+print("="*50)
+print(f"Файл: dental_clinic.db")
+print(f"Врачей: {len(doctors)}")
+print(f"Записей: {len(test_appointments)}")
+print("\nМожно открыть в DBeaver!")
+print("="*50)
