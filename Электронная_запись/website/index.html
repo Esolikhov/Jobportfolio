@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Запись на приём — Стоматологическая клиника</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Заставка -->
+    <div id="welcomeScreen" class="welcome-screen">
+        <div class="welcome-content">
+            <div class="welcome-logo">
+                <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+                    <circle cx="60" cy="60" r="55" fill="#E3F2FD" stroke="#2196F3" stroke-width="4"/>
+                    <path d="M60 30 C70 30 70 40 70 50 C70 60 60 70 60 80 C60 70 50 60 50 50 C50 40 50 30 60 30" fill="white" stroke="#2196F3" stroke-width="4"/>
+                </svg>
+            </div>
+            <h1 class="welcome-title">Добро пожаловать</h1>
+            <h2 class="welcome-subtitle">в Стоматологическую клинику</h2>
+            <div class="welcome-spinner"></div>
+        </div>
+    </div>
+
+    <div class="container" id="mainContent" style="display: none;">
+        <header>
+            <div class="logo">
+                <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+                    <circle cx="30" cy="30" r="28" fill="#E3F2FD" stroke="#2196F3" stroke-width="2"/>
+                    <path d="M30 15 C35 15 35 20 35 25 C35 30 30 35 30 40 C30 35 25 30 25 25 C25 20 25 15 30 15" fill="white" stroke="#2196F3" stroke-width="2"/>
+                </svg>
+            </div>
+            <h1>Стоматологическая клиника</h1>
+            <p>Запись на приём к врачу</p>
+        </header>
+
+        <div id="bookingForm" class="booking-form">
+            <div class="form-group">
+                <label for="patientName">Ваше имя</label>
+                <input type="text" id="patientName" placeholder="Введите ваше имя" required>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Номер телефона</label>
+                <input type="tel" id="phone" placeholder="+992 XX XXX XXXX" required>
+            </div>
+
+            <div class="form-group">
+                <label for="doctor">Выберите врача</label>
+                <select id="doctor" required>
+                    <option value="">-- Выберите врача --</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="service">Услуга</label>
+                <select id="service">
+                    <option value="">-- Выберите услугу --</option>
+                    <option value="Консультация">Консультация</option>
+                    <option value="Лечение кариеса">Лечение кариеса</option>
+                    <option value="Лечение пульпита">Лечение пульпита</option>
+                    <option value="Удаление зуба">Удаление зуба</option>
+                    <option value="Профессиональная чистка">Профессиональная чистка</option>
+                    <option value="Протезирование">Протезирование</option>
+                    <option value="Ортодонтия">Ортодонтия</option>
+                </select>
+                <small class="hint">Если не уверены — выберите «Консультация».</small>
+            </div>
+
+            <div class="form-group">
+                <label for="date">Дата приёма</label>
+                <input type="date" id="date" required>
+            </div>
+
+            <div class="form-group">
+                <label>Время приёма</label>
+                <div id="timeSlots" class="time-slots">
+                    <p class="hint">Выберите врача и дату</p>
+                </div>
+            </div>
+
+            <button id="submitBtn" class="submit-btn" onclick="submitBooking()">
+                Записаться на приём
+            </button>
+        </div>
+
+        <div id="confirmation" class="confirmation" style="display: none;">
+            <div class="success-icon">
+                <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                    <circle cx="40" cy="40" r="38" fill="#E8F5E9" stroke="#4CAF50" stroke-width="2"/>
+                    <path d="M25 40 L35 50 L55 30" stroke="#4CAF50" stroke-width="4" stroke-linecap="round" fill="none"/>
+                </svg>
+            </div>
+            <h2>Вы успешно записаны на приём</h2>
+            <div id="confirmDetails" class="confirm-details"></div>
+            <button onclick="location.reload()" class="submit-btn">Записаться ещё раз</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
