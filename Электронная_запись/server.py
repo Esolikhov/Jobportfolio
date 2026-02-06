@@ -394,36 +394,48 @@ def get_doctors():
 
 @app.get("/api/available-slots")
 def get_available_slots(doctor_id: int, date: str):
-    """ВАЖНО: клиент ждёт список строк времени (['08:00','08:30',...]),
-    а не список объектов. Поэтому возвращаем именно list[str].
     """
-    slots = []
+    Возвращает свободные слоты времени для выбранного врача и даты.
+
+    Формат ответа (для фронта): список объектов:
+        [{"time": "08:00"}, {"time": "08:30"}, ...]
+    """
+    slots: list[dict] = []
+
+    def _add(time_str: str):
+        # Единый формат для фронта
+        slots.append({"time": time_str})
+
     if USE_POSTGRES:
         for hour in range(8, 17):
             for minute in (0, 30):
                 time_str = f"{hour:02d}:{minute:02d}"
                 existing = pg_query_one(
-                    "SELECT id FROM public.appointments WHERE doctor_id = %s AND appointment_date = %s AND appointment_time = %s AND status = 'активна' LIMIT 1",
+                    "SELECT id FROM public.appointments "
+                    "WHERE doctor_id = %s AND appointment_date = %s AND appointment_time = %s "
+                    "AND status = 'активна' LIMIT 1",
                     (doctor_id, date, time_str),
                 )
                 if existing is None:
-                    slots.append(time_str)
+                    _add(time_str)
         return slots
 
     conn = get_db_sqlite()
-    for hour in range(8, 17):
-        for minute in (0, 30):
-            time_str = f"{hour:02d}:{minute:02d}"
-            existing = conn.execute(
-                "SELECT id FROM appointments WHERE doctor_id = ? AND appointment_date = ? AND appointment_time = ? AND status = 'активна'",
-                (doctor_id, date, time_str),
-            ).fetchone()
-            if existing is None:
-                slots.append(time_str)
-    conn.close()
-    return slots
-
-
+    try:
+        for hour in range(8, 17):
+            for minute in (0, 30):
+                time_str = f"{hour:02d}:{minute:02d}"
+                existing = conn.execute(
+                    "SELECT id FROM appointments "
+                    "WHERE doctor_id = ? AND appointment_date = ? AND appointment_time = ? "
+                    "AND status = 'активна'",
+                    (doctor_id, date, time_str),
+                ).fetchone()
+                if existing is None:
+                    _add(time_str)
+        return slots
+    finally:
+        conn.close()
 @app.post("/api/appointments")
 def create_appointment(appointment: AppointmentCreate):
     if USE_POSTGRES:
@@ -713,7 +725,7 @@ def add_to_queue(data: dict):
             # - иначе строка "1"
             col = cols.get("room", {}) if isinstance(cols, dict) else {}
             dt = (col.get("data_type") or "").lower()
-            room = 1 if "int" in dt else "1" 
+            room = 1 if "int" in dt else "1"
 
         insert_cols = []
         insert_vals_sql = []
