@@ -658,6 +658,12 @@ def add_to_queue(data: dict):
         if not apt:
             raise HTTPException(status_code=404, detail="Appointment not found")
 
+        # берём кабинет/room врача (нужно для некоторых схем queue, где room NOT NULL)
+        doc = pg_query_one("SELECT id, room FROM public.doctors WHERE id = %s", (apt["doctor_id"],))
+        doctor_room = None
+        if doc:
+            doctor_room = doc.get("room")
+
         # не добавляем дубли (ожидание/вызван/в работе)
         existing = pg_query_one(
             """SELECT id FROM public.queue
@@ -689,6 +695,8 @@ def add_to_queue(data: dict):
         # Базовые поля
         add_col("appointment_id", int(apt["id"]))
         add_col("doctor_id", int(apt["doctor_id"]))
+        # room/cabinet: в некоторых БД поле room в queue NOT NULL
+        add_col("room", doctor_room if doctor_room is not None else 1)
         add_col("status", "ожидание")
         # В некоторых схемах called_at / created_at обязательны
         add_col("called_at", None, use_now=True)
