@@ -19,6 +19,25 @@ SQLITE_PATH = os.getenv("SQLITE_PATH", "dental_clinic.db")
 
 USE_POSTGRES = DATABASE_URL.startswith("postgres://") or DATABASE_URL.startswith("postgresql://")
 
+
+def normalize_date_str(date_str: str) -> str:
+    """
+    Приводит дату к единому формату YYYY-MM-DD.
+    Принимаем:
+      - "2026-02-08"
+      - "08.02.2026"
+    Если формат не распознан — возвращаем как есть.
+    """
+    if not date_str:
+        return date_str
+    s = str(date_str).strip()
+    for fmt in ("%Y-%m-%d", "%d.%m.%Y"):
+        try:
+            return datetime.strptime(s, fmt).strftime("%Y-%m-%d")
+        except Exception:
+            pass
+    return s
+
 app = FastAPI()
 
 # Разрешаем запросы с Netlify/браузера
@@ -394,48 +413,62 @@ def get_doctors():
 
 @app.get("/api/available-slots")
 def get_available_slots(doctor_id: int, date: str):
+    date = normalize_date_str(date)
     """
-    Возвращает свободные слоты времени для выбранного врача и даты.
+    Возвращает слоты времени для выбранного врача и даты.
 
-    Формат ответа (для фронта): список объектов:
-        [{"time": "08:00"}, {"time": "08:30"}, ...]
+    Оптимизация:
+    - раньше сервер делал запрос в БД на каждый слот (18 запросов) -> медленно на облаке;
+    - теперь делаем ОДИН запрос и формируем ответ в памяти.
+
+    Формат ответа (устойчивый для фронта, чтобы блокировка работала корректно):
+        [{"time":"08:00","available":true,"is_available":true,"disabled":false}, ...]
     """
-    slots: list[dict] = []
+    # Сетка приёма: 08:00–16:30 с шагом 30 минут
+    all_times = [f"{h:02d}:{m:02d}" for h in range(8, 17) for m in (0, 30)]
 
-    def _add(time_str: str):
-        # Единый формат для фронта
-        slots.append({"time": time_str})
+    booked: set[str] = set()
 
     if USE_POSTGRES:
-        for hour in range(8, 17):
-            for minute in (0, 30):
-                time_str = f"{hour:02d}:{minute:02d}"
-                existing = pg_query_one(
-                    "SELECT id FROM public.appointments "
-                    "WHERE doctor_id = %s AND appointment_date = %s AND appointment_time = %s "
-                    "AND status = 'активна' LIMIT 1",
-                    (doctor_id, date, time_str),
-                )
-                if existing is None:
-                    _add(time_str)
-        return slots
+        rows = pg_query_all(
+            "SELECT appointment_time FROM public.appointments "
+            "WHERE doctor_id = %s AND appointment_date = %s AND status = 'активна'",
+            (doctor_id, date),
+        )
+        for r in rows:
+            if isinstance(r, dict):
+                t = r.get("appointment_time")
+            else:
+                t = r[0] if r else None
+            if t:
+                booked.add(str(t))
+    else:
+        conn = get_db_sqlite()
+        try:
+            rows = conn.execute(
+                "SELECT appointment_time FROM appointments "
+                "WHERE doctor_id = ? AND appointment_date = ? AND status = 'активна'",
+                (doctor_id, date),
+            ).fetchall()
+            for r in rows:
+                t = r[0] if r else None
+                if t:
+                    booked.add(str(t))
+        finally:
+            conn.close()
 
-    conn = get_db_sqlite()
-    try:
-        for hour in range(8, 17):
-            for minute in (0, 30):
-                time_str = f"{hour:02d}:{minute:02d}"
-                existing = conn.execute(
-                    "SELECT id FROM appointments "
-                    "WHERE doctor_id = ? AND appointment_date = ? AND appointment_time = ? "
-                    "AND status = 'активна'",
-                    (doctor_id, date, time_str),
-                ).fetchone()
-                if existing is None:
-                    _add(time_str)
-        return slots
-    finally:
-        conn.close()
+    resp = []
+    for t in all_times:
+        is_free = t not in booked
+        resp.append({
+            "time": t,
+            "available": is_free,
+            "is_available": is_free,   # на случай если фронт использует это имя
+            "disabled": not is_free,   # на случай если фронт использует disabled
+        })
+    return resp
+
+
 @app.post("/api/appointments")
 def create_appointment(appointment: AppointmentCreate):
     if USE_POSTGRES:
