@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -171,14 +171,19 @@ def _pg_getconn():
     return conn, key
 
 def _pg_putconn(conn, key: str):
-    # сначала пробуем вернуть по ключу; если по какой-то причине пул его не знает — пробуем без ключа
+    """Возвращаем соединение в пул корректно для текущего ключа.
+    В multi-worker/multi-thread окружении без ключа возможна ошибка 'trying to put unkeyed connection'.
+    """
     try:
         _pg_pool.putconn(conn, key)
     except Exception:
+        # fallback: попытка без ключа (на случай несовместимости/старого пула)
         try:
-            _pg_putconn(conn, _key)
+            _pg_pool.putconn(conn)
         except Exception:
             pass
+
+
 
 
 def ensure_schema_pg():
@@ -354,35 +359,61 @@ def get_doctors():
 
 
 @app.get("/api/available-slots")
-def get_available_slots(doctor_id: int, date: str):
-    """ВАЖНО: клиент ждёт список строк времени (['08:00','08:30',...]),
-    а не список объектов. Поэтому возвращаем именно list[str].
-    """
-    slots = []
-    if USE_POSTGRES:
-        for hour in range(8, 17):
-            for minute in (0, 30):
-                time_str = f"{hour:02d}:{minute:02d}"
-                existing = pg_query_one(
-                    "SELECT id FROM public.appointments WHERE doctor_id = %s AND appointment_date = %s AND appointment_time = %s AND status = 'активна' LIMIT 1",
-                    (doctor_id, date, time_str),
-                )
-                if existing is None:
-                    slots.append(time_str)
-        return slots
+def get_available_slots(doctor_id: int, date: str, request: 'Request' = None):
+    """Возвращает доступные/занятые слоты.
 
-    conn = get_db_sqlite()
-    for hour in range(8, 17):
-        for minute in (0, 30):
-            time_str = f"{hour:02d}:{minute:02d}"
-            existing = conn.execute(
-                "SELECT id FROM appointments WHERE doctor_id = ? AND appointment_date = ? AND appointment_time = ? AND status = 'активна'",
-                (doctor_id, date, time_str),
-            ).fetchone()
-            if existing is None:
-                slots.append(time_str)
-    conn.close()
-    return slots
+    Совместимость:
+    - Для desktop-клиента на requests (User-Agent содержит 'python-requests') возвращаем list[str] только свободных слотов,
+      как и раньше (например: ['08:00','08:30',...]).
+    - Для браузерного фронта возвращаем list[dict] со всеми слотами и признаком доступности:
+      [{'time':'08:00','available':true}, ...] — это формат, который ожидает script.js.
+    """
+    # полный список слотов (08:00–16:30, шаг 30 минут)
+    all_times = [f"{h:02d}:{m:02d}" for h in range(8, 17) for m in (0, 30)]
+
+    ua = ""
+    if request is not None:
+        try:
+            ua = (request.headers.get("user-agent") or "").lower()
+        except Exception:
+            ua = ""
+
+    wants_raw = "python-requests" in ua  # desktop app
+    # можно также принудительно запросить raw-формат: ?raw=1
+    # (не мешает, если кто-то захочет использовать в будущем)
+    # request может быть None при прямом вызове, поэтому безопасно
+    try:
+        if request is not None and (request.query_params.get("raw") in ("1", "true", "yes")):
+            wants_raw = True
+    except Exception:
+        pass
+
+    if USE_POSTGRES:
+        # ОДИН запрос: получаем занятые времена
+        rows = pg_query_all(
+            """SELECT appointment_time
+               FROM public.appointments
+               WHERE doctor_id = %s AND appointment_date = %s AND status = 'активна'""",
+            (doctor_id, date),
+        )
+        busy = {r["appointment_time"] for r in rows if r.get("appointment_time")}
+    else:
+        conn = get_db_sqlite()
+        rows = conn.execute(
+            """SELECT appointment_time
+               FROM appointments
+               WHERE doctor_id = ? AND appointment_date = ? AND status = 'активна'""",
+            (doctor_id, date),
+        ).fetchall()
+        conn.close()
+        busy = {r["appointment_time"] for r in rows if r["appointment_time"]}
+
+    if wants_raw:
+        # desktop app: только свободные слоты (list[str])
+        return [t for t in all_times if t not in busy]
+
+    # web front: все слоты с доступностью (list[dict])
+    return [{"time": t, "available": (t not in busy)} for t in all_times]
 
 
 @app.post("/api/appointments")
