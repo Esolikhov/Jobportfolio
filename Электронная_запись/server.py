@@ -49,17 +49,88 @@ class AppointmentCreate(BaseModel):
 import sqlite3
 
 def ensure_schema_sqlite(conn: sqlite3.Connection) -> None:
-    """Мягкая миграция SQLite БД без потери данных."""
+    """Мягкая миграция SQLite БД без потери данных.
+    Дополнительно создаёт таблицы, если их ещё нет (для полного backend).
+    """
     cur = conn.cursor()
+
+    # --- create tables (if missing) ---
+    cur.execute(
+        """CREATE TABLE IF NOT EXISTS doctors (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            room TEXT DEFAULT '',
+            status TEXT DEFAULT 'доступен',
+            is_active INTEGER DEFAULT 1
+        )"""
+    )
+
+    cur.execute(
+        """CREATE TABLE IF NOT EXISTS appointments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            patient_name TEXT NOT NULL,
+            phone TEXT DEFAULT '',
+            doctor_id INTEGER NOT NULL,
+            appointment_date TEXT NOT NULL,
+            appointment_time TEXT NOT NULL,
+            service_name TEXT,
+            status TEXT DEFAULT 'активна',
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (doctor_id) REFERENCES doctors(id)
+        )"""
+    )
+
+    cur.execute(
+        """CREATE TABLE IF NOT EXISTS queue (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            appointment_id INTEGER NOT NULL,
+            doctor_id INTEGER NOT NULL,
+            status TEXT DEFAULT 'ожидание',
+            called_at TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (appointment_id) REFERENCES appointments(id),
+            FOREIGN KEY (doctor_id) REFERENCES doctors(id)
+        )"""
+    )
+
+    # --- mild migrations (columns) ---
     # appointments.service_name
     try:
         cols = [r[1] for r in cur.execute("PRAGMA table_info(appointments)").fetchall()]
         if "service_name" not in cols:
             cur.execute("ALTER TABLE appointments ADD COLUMN service_name TEXT")
-            conn.commit()
+        if "status" not in cols:
+            cur.execute("ALTER TABLE appointments ADD COLUMN status TEXT DEFAULT 'активна'")
     except Exception:
-        # если таблицы ещё нет — ничего
         pass
+
+    # doctors.room/status/is_active
+    try:
+        cols = [r[1] for r in cur.execute("PRAGMA table_info(doctors)").fetchall()]
+        if "room" not in cols:
+            cur.execute("ALTER TABLE doctors ADD COLUMN room TEXT DEFAULT ''")
+        if "status" not in cols:
+            cur.execute("ALTER TABLE doctors ADD COLUMN status TEXT DEFAULT 'доступен'")
+        if "is_active" not in cols:
+            cur.execute("ALTER TABLE doctors ADD COLUMN is_active INTEGER DEFAULT 1")
+    except Exception:
+        pass
+
+    # queue.called_at / queue.status
+    try:
+        cols = [r[1] for r in cur.execute("PRAGMA table_info(queue)").fetchall()]
+        if "called_at" not in cols:
+            cur.execute("ALTER TABLE queue ADD COLUMN called_at TEXT")
+        if "status" not in cols:
+            cur.execute("ALTER TABLE queue ADD COLUMN status TEXT DEFAULT 'ожидание'")
+        if "appointment_id" not in cols:
+            # крайне редкий случай: если таблица queue уже была создана иначе
+            # здесь ничего не делаем, чтобы не потерять данные
+            pass
+    except Exception:
+        pass
+
+    conn.commit()
 
 def get_db_sqlite():
     conn = sqlite3.connect(SQLITE_PATH)
@@ -89,25 +160,113 @@ def _init_pg_pool():
     )
 
 def ensure_schema_pg():
-    """Добавляет отсутствующие колонки (без потери данных)."""
+    """Добавляет отсутствующие таблицы/колонки (без потери данных).
+    Примечание: требует прав на DDL; если прав нет, просто продолжим работу.
+    """
+    if not USE_POSTGRES:
+        return
     _init_pg_pool()
     conn = _pg_pool.getconn()
     try:
         conn.autocommit = True
         with conn.cursor() as cur:
+            try:
+                # tables (idempotent)
+                cur.execute(
+                    """CREATE TABLE IF NOT EXISTS public.doctors (
+                        id serial PRIMARY KEY,
+                        name text NOT NULL,
+                        room text DEFAULT '',
+                        status text DEFAULT 'доступен',
+                        is_active int DEFAULT 1
+                    )"""
+                )
+                cur.execute(
+                    """CREATE TABLE IF NOT EXISTS public.appointments (
+                        id serial PRIMARY KEY,
+                        patient_name text NOT NULL,
+                        phone text DEFAULT '',
+                        doctor_id int NOT NULL,
+                        appointment_date text NOT NULL,
+                        appointment_time text NOT NULL,
+                        service_name text,
+                        status text DEFAULT 'активна',
+                        created_at timestamptz DEFAULT now()
+                    )"""
+                )
+                cur.execute(
+                    """CREATE TABLE IF NOT EXISTS public.queue (
+                        id serial PRIMARY KEY,
+                        appointment_id int NOT NULL,
+                        doctor_id int NOT NULL,
+                        status text DEFAULT 'ожидание',
+                        called_at timestamptz,
+                        created_at timestamptz DEFAULT now()
+                    )"""
+                )
+            except Exception:
+                # нет прав на CREATE TABLE — не ломаем приложение
+                pass
+
             # appointments.service_name (если нет в create_db.py)
-            cur.execute(
-                """
-                SELECT 1
-                FROM information_schema.columns
-                WHERE table_schema='public'
-                  AND table_name='appointments'
-                  AND column_name='service_name'
-                """
-            )
-            exists = cur.fetchone() is not None
-            if not exists:
-                cur.execute("ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS service_name text")
+            try:
+                cur.execute(
+                    """
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_schema='public'
+                      AND table_name='appointments'
+                      AND column_name='service_name'
+                    """
+                )
+                exists = cur.fetchone() is not None
+                if not exists:
+                    cur.execute("ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS service_name text")
+            except Exception:
+                pass
+
+            # doctors room/status/is_active
+            for col, ddl in [
+                ("room", "ALTER TABLE public.doctors ADD COLUMN IF NOT EXISTS room text DEFAULT ''"),
+                ("status", "ALTER TABLE public.doctors ADD COLUMN IF NOT EXISTS status text DEFAULT 'доступен'"),
+                ("is_active", "ALTER TABLE public.doctors ADD COLUMN IF NOT EXISTS is_active int DEFAULT 1"),
+            ]:
+                try:
+                    cur.execute(
+                        """
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema='public'
+                          AND table_name='doctors'
+                          AND column_name=%s
+                        """,
+                        (col,),
+                    )
+                    if cur.fetchone() is None:
+                        cur.execute(ddl)
+                except Exception:
+                    pass
+
+            # queue columns
+            for col, ddl in [
+                ("called_at", "ALTER TABLE public.queue ADD COLUMN IF NOT EXISTS called_at timestamptz"),
+                ("status", "ALTER TABLE public.queue ADD COLUMN IF NOT EXISTS status text DEFAULT 'ожидание'"),
+            ]:
+                try:
+                    cur.execute(
+                        """
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema='public'
+                          AND table_name='queue'
+                          AND column_name=%s
+                        """,
+                        (col,),
+                    )
+                    if cur.fetchone() is None:
+                        cur.execute(ddl)
+                except Exception:
+                    pass
     finally:
         _pg_pool.putconn(conn)
 
@@ -174,6 +333,9 @@ def get_doctors():
 
 @app.get("/api/available-slots")
 def get_available_slots(doctor_id: int, date: str):
+    """ВАЖНО: клиент ждёт список строк времени (['08:00','08:30',...]),
+    а не список объектов. Поэтому возвращаем именно list[str].
+    """
     slots = []
     if USE_POSTGRES:
         for hour in range(8, 17):
@@ -183,7 +345,8 @@ def get_available_slots(doctor_id: int, date: str):
                     "SELECT id FROM public.appointments WHERE doctor_id = %s AND appointment_date = %s AND appointment_time = %s AND status = 'активна' LIMIT 1",
                     (doctor_id, date, time_str),
                 )
-                slots.append({"time": time_str, "available": existing is None})
+                if existing is None:
+                    slots.append(time_str)
         return slots
 
     conn = get_db_sqlite()
@@ -194,7 +357,8 @@ def get_available_slots(doctor_id: int, date: str):
                 "SELECT id FROM appointments WHERE doctor_id = ? AND appointment_date = ? AND appointment_time = ? AND status = 'активна'",
                 (doctor_id, date, time_str),
             ).fetchone()
-            slots.append({"time": time_str, "available": existing is None})
+            if existing is None:
+                slots.append(time_str)
     conn.close()
     return slots
 
@@ -255,6 +419,118 @@ def create_appointment(appointment: AppointmentCreate):
     return {"success": True, "id": apt_id}
 
 
+@app.put("/api/appointments/{apt_id}")
+def update_appointment(apt_id: int, data: dict):
+    """Обновление записи (перенос/смена врача/времени/даты) — нужно клиенту.
+    Ожидаемые поля: doctor_id, appointment_date, appointment_time, (опционально phone, patient_name, service_name, status)
+    """
+    allowed = {"doctor_id", "appointment_date", "appointment_time", "patient_name", "phone", "service_name", "status"}
+    fields = {k: v for k, v in (data or {}).items() if k in allowed}
+
+    if not fields:
+        raise HTTPException(status_code=400, detail="Нет данных для обновления")
+
+    # проверим конфликт слота, если меняют doctor_id/date/time
+    new_doctor = fields.get("doctor_id")
+    new_date = fields.get("appointment_date")
+    new_time = fields.get("appointment_time")
+
+    if USE_POSTGRES:
+        # получаем текущую запись
+        current = pg_query_one("SELECT * FROM public.appointments WHERE id = %s", (apt_id,))
+        if not current:
+            raise HTTPException(status_code=404, detail="Запись не найдена")
+
+        doctor_id = new_doctor if new_doctor is not None else current["doctor_id"]
+        ap_date = new_date if new_date is not None else current["appointment_date"]
+        ap_time = new_time if new_time is not None else current["appointment_time"]
+
+        # конфликт
+        existing = pg_query_one(
+            """SELECT id FROM public.appointments
+               WHERE doctor_id = %s AND appointment_date = %s AND appointment_time = %s
+                 AND status = 'активна' AND id <> %s
+               LIMIT 1""",
+            (doctor_id, ap_date, ap_time, apt_id),
+        )
+        if existing:
+            raise HTTPException(status_code=400, detail="Время занято")
+
+        set_parts = []
+        params = []
+        for k, v in fields.items():
+            set_parts.append(f"{k} = %s")
+            params.append(v)
+        params.append(apt_id)
+        pg_execute(f"UPDATE public.appointments SET {', '.join(set_parts)} WHERE id = %s", tuple(params))
+        return {"success": True}
+
+    conn = get_db_sqlite()
+    cur = conn.cursor()
+    current = cur.execute("SELECT * FROM appointments WHERE id = ?", (apt_id,)).fetchone()
+    if not current:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Запись не найдена")
+
+    doctor_id = new_doctor if new_doctor is not None else current["doctor_id"]
+    ap_date = new_date if new_date is not None else current["appointment_date"]
+    ap_time = new_time if new_time is not None else current["appointment_time"]
+
+    existing = cur.execute(
+        """SELECT id FROM appointments
+           WHERE doctor_id = ? AND appointment_date = ? AND appointment_time = ?
+             AND status = 'активна' AND id <> ? LIMIT 1""",
+        (doctor_id, ap_date, ap_time, apt_id),
+    ).fetchone()
+    if existing:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Время занято")
+
+    set_parts = []
+    params = []
+    for k, v in fields.items():
+        set_parts.append(f"{k} = ?")
+        params.append(v)
+    params.append(apt_id)
+    cur.execute(f"UPDATE appointments SET {', '.join(set_parts)} WHERE id = ?", tuple(params))
+    conn.commit()
+    conn.close()
+    return {"success": True}
+
+
+@app.get("/api/appointments/search")
+def search_appointments(patient_name: str = ""):
+    """Поиск записей по ФИО/имени пациента — используется клиентом."""
+    q = (patient_name or "").strip()
+    if q == "":
+        # возвращать всё не будем (это тяжело); но для совместимости вернём пусто
+        return []
+
+    if USE_POSTGRES:
+        return pg_query_all(
+            """SELECT a.*, d.name as doctor_name, d.room
+               FROM public.appointments a
+               LEFT JOIN public.doctors d ON a.doctor_id = d.id
+               WHERE LOWER(a.patient_name) LIKE LOWER(%s)
+               ORDER BY a.appointment_date DESC, a.appointment_time DESC
+               LIMIT 200""",
+            (f"%{q}%",),
+        )
+
+    conn = get_db_sqlite()
+    rows = conn.execute(
+        """SELECT a.*, d.name as doctor_name, d.room
+           FROM appointments a
+           LEFT JOIN doctors d ON a.doctor_id = d.id
+           WHERE LOWER(a.patient_name) LIKE ?
+           ORDER BY a.appointment_date DESC, a.appointment_time DESC
+           LIMIT 200""",
+        (f"%{q.lower()}%",),
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
 @app.get("/api/appointments/today")
 def get_today_appointments(date: str = None):
     if not date:
@@ -285,25 +561,138 @@ def get_today_appointments(date: str = None):
 
 @app.get("/api/queue")
 def get_queue():
+    """Очередь — клиенту нужны: id, status, doctor_id, doctor_name, room, patient_name, phone, service_name, appointment_id, called_at."""
     if USE_POSTGRES:
         return pg_query_all(
-            """SELECT q.*, d.name as doctor_name
+            """SELECT q.*,
+                      d.name as doctor_name,
+                      d.room as room,
+                      a.patient_name as patient_name,
+                      a.phone as phone,
+                      a.service_name as service_name,
+                      a.appointment_date as appointment_date,
+                      a.appointment_time as appointment_time
                FROM public.queue q
                JOIN public.doctors d ON q.doctor_id = d.id
+               LEFT JOIN public.appointments a ON q.appointment_id = a.id
                WHERE q.status NOT IN ('завершён', 'не_пришёл')
-               ORDER BY q.called_at"""
+               ORDER BY q.called_at NULLS LAST, q.id"""
         )
 
     conn = get_db_sqlite()
     queue = conn.execute(
-        """SELECT q.*, d.name as doctor_name
+        """SELECT q.*,
+                  d.name as doctor_name,
+                  d.room as room,
+                  a.patient_name as patient_name,
+                  a.phone as phone,
+                  a.service_name as service_name,
+                  a.appointment_date as appointment_date,
+                  a.appointment_time as appointment_time
            FROM queue q
            JOIN doctors d ON q.doctor_id = d.id
+           LEFT JOIN appointments a ON q.appointment_id = a.id
            WHERE q.status NOT IN ('завершён', 'не_пришёл')
-           ORDER BY q.called_at"""
+           ORDER BY q.called_at, q.id"""
     ).fetchall()
     conn.close()
     return [dict(row) for row in queue]
+
+
+@app.post("/api/queue")
+def add_to_queue(data: dict):
+    """Добавить в очередь. Клиент отправляет {"appointment_id": <id>}"""
+    appointment_id = (data or {}).get("appointment_id")
+    if not appointment_id:
+        raise HTTPException(status_code=400, detail="appointment_id required")
+
+    if USE_POSTGRES:
+        apt = pg_query_one("SELECT id, doctor_id FROM public.appointments WHERE id = %s", (appointment_id,))
+        if not apt:
+            raise HTTPException(status_code=404, detail="Appointment not found")
+
+        # не добавляем дубли (ожидание/вызван/в работе)
+        existing = pg_query_one(
+            """SELECT id FROM public.queue
+               WHERE appointment_id = %s AND status NOT IN ('завершён','не_пришёл')
+               LIMIT 1""",
+            (appointment_id,),
+        )
+        if existing:
+            return {"success": True, "id": int(existing["id"])}
+
+        new_id = pg_execute(
+            """INSERT INTO public.queue (appointment_id, doctor_id, status, called_at)
+               VALUES (%s, %s, 'ожидание', now())
+               RETURNING id""",
+            (appointment_id, apt["doctor_id"]),
+            returning_id=True,
+        )
+        return {"success": True, "id": int(new_id)}
+
+    conn = get_db_sqlite()
+    cur = conn.cursor()
+    apt = cur.execute("SELECT id, doctor_id FROM appointments WHERE id = ?", (appointment_id,)).fetchone()
+    if not apt:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Appointment not found")
+
+    existing = cur.execute(
+        """SELECT id FROM queue
+           WHERE appointment_id = ? AND status NOT IN ('завершён','не_пришёл')
+           LIMIT 1""",
+        (appointment_id,),
+    ).fetchone()
+    if existing:
+        qid = existing["id"]
+        conn.close()
+        return {"success": True, "id": qid}
+
+    cur.execute(
+        "INSERT INTO queue (appointment_id, doctor_id, status, called_at) VALUES (?, ?, 'ожидание', ?)",
+        (appointment_id, apt["doctor_id"], datetime.now().isoformat(timespec="seconds")),
+    )
+    conn.commit()
+    qid = cur.lastrowid
+    conn.close()
+    return {"success": True, "id": qid}
+
+
+@app.put("/api/queue/{queue_id}/status")
+def update_queue_status(queue_id: int, data: dict):
+    """Обновить статус элемента очереди. Клиент шлёт {"status": "..."}"""
+    status = (data or {}).get("status")
+    if not status:
+        raise HTTPException(status_code=400, detail="status required")
+
+    # если статус меняется на "вызван/в_работе" и called_at пустой — ставим время
+    now_iso = datetime.now().isoformat(timespec="seconds")
+
+    if USE_POSTGRES:
+        row = pg_query_one("SELECT id, called_at FROM public.queue WHERE id = %s", (queue_id,))
+        if not row:
+            raise HTTPException(status_code=404, detail="Queue item not found")
+
+        if row.get("called_at") is None:
+            pg_execute("UPDATE public.queue SET status = %s, called_at = now() WHERE id = %s", (status, queue_id))
+        else:
+            pg_execute("UPDATE public.queue SET status = %s WHERE id = %s", (status, queue_id))
+        return {"success": True}
+
+    conn = get_db_sqlite()
+    cur = conn.cursor()
+    row = cur.execute("SELECT id, called_at FROM queue WHERE id = ?", (queue_id,)).fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Queue item not found")
+
+    if row["called_at"] is None:
+        cur.execute("UPDATE queue SET status = ?, called_at = ? WHERE id = ?", (status, now_iso, queue_id))
+    else:
+        cur.execute("UPDATE queue SET status = ? WHERE id = ?", (status, queue_id))
+    conn.commit()
+    conn.close()
+    return {"success": True}
 
 
 @app.put("/api/doctors/{doctor_id}/status")
