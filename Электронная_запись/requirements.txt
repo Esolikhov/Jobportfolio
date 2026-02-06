@@ -4,5 +4,5 @@ pydantic==2.5.0
 openpyxl==3.1.2
 pyttsx3==2.90
 customtkinter
-pyttsx3
 pillow
+psycopg2-binary==2.9.9
