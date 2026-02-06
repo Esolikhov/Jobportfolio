@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -171,19 +171,14 @@ def _pg_getconn():
     return conn, key
 
 def _pg_putconn(conn, key: str):
-    """Возвращаем соединение в пул корректно для текущего ключа.
-    В multi-worker/multi-thread окружении без ключа возможна ошибка 'trying to put unkeyed connection'.
-    """
+    # сначала пробуем вернуть по ключу; если по какой-то причине пул его не знает — пробуем без ключа
     try:
         _pg_pool.putconn(conn, key)
     except Exception:
-        # fallback: попытка без ключа (на случай несовместимости/старого пула)
         try:
-            _pg_pool.putconn(conn)
+            _pg_putconn(conn, _key)
         except Exception:
             pass
-
-
 
 
 def ensure_schema_pg():
@@ -337,6 +332,26 @@ def pg_execute(sql: str, params=None, returning_id: bool = False):
         _pg_putconn(conn, _key)
 
 
+# Cache for Postgres table columns (for compatibility with existing schemas)
+_pg_cols_cache = {}
+
+def pg_table_columns(table_name: str):
+    """Return list of column metadata dicts for public.<table_name>."""
+    key = table_name.lower()
+    if key in _pg_cols_cache:
+        return _pg_cols_cache[key]
+    rows = pg_query_all(
+        """SELECT column_name, is_nullable, column_default
+             FROM information_schema.columns
+             WHERE table_schema='public' AND table_name=%s
+             ORDER BY ordinal_position""",
+        (key,),
+    )
+    _pg_cols_cache[key] = rows or []
+    return _pg_cols_cache[key]
+
+
+
 # ==============================
 # API
 # ==============================
@@ -359,61 +374,35 @@ def get_doctors():
 
 
 @app.get("/api/available-slots")
-def get_available_slots(doctor_id: int, date: str, request: 'Request' = None):
-    """Возвращает доступные/занятые слоты.
-
-    Совместимость:
-    - Для desktop-клиента на requests (User-Agent содержит 'python-requests') возвращаем list[str] только свободных слотов,
-      как и раньше (например: ['08:00','08:30',...]).
-    - Для браузерного фронта возвращаем list[dict] со всеми слотами и признаком доступности:
-      [{'time':'08:00','available':true}, ...] — это формат, который ожидает script.js.
+def get_available_slots(doctor_id: int, date: str):
+    """ВАЖНО: клиент ждёт список строк времени (['08:00','08:30',...]),
+    а не список объектов. Поэтому возвращаем именно list[str].
     """
-    # полный список слотов (08:00–16:30, шаг 30 минут)
-    all_times = [f"{h:02d}:{m:02d}" for h in range(8, 17) for m in (0, 30)]
-
-    ua = ""
-    if request is not None:
-        try:
-            ua = (request.headers.get("user-agent") or "").lower()
-        except Exception:
-            ua = ""
-
-    wants_raw = "python-requests" in ua  # desktop app
-    # можно также принудительно запросить raw-формат: ?raw=1
-    # (не мешает, если кто-то захочет использовать в будущем)
-    # request может быть None при прямом вызове, поэтому безопасно
-    try:
-        if request is not None and (request.query_params.get("raw") in ("1", "true", "yes")):
-            wants_raw = True
-    except Exception:
-        pass
-
+    slots = []
     if USE_POSTGRES:
-        # ОДИН запрос: получаем занятые времена
-        rows = pg_query_all(
-            """SELECT appointment_time
-               FROM public.appointments
-               WHERE doctor_id = %s AND appointment_date = %s AND status = 'активна'""",
-            (doctor_id, date),
-        )
-        busy = {r["appointment_time"] for r in rows if r.get("appointment_time")}
-    else:
-        conn = get_db_sqlite()
-        rows = conn.execute(
-            """SELECT appointment_time
-               FROM appointments
-               WHERE doctor_id = ? AND appointment_date = ? AND status = 'активна'""",
-            (doctor_id, date),
-        ).fetchall()
-        conn.close()
-        busy = {r["appointment_time"] for r in rows if r["appointment_time"]}
+        for hour in range(8, 17):
+            for minute in (0, 30):
+                time_str = f"{hour:02d}:{minute:02d}"
+                existing = pg_query_one(
+                    "SELECT id FROM public.appointments WHERE doctor_id = %s AND appointment_date = %s AND appointment_time = %s AND status = 'активна' LIMIT 1",
+                    (doctor_id, date, time_str),
+                )
+                if existing is None:
+                    slots.append(time_str)
+        return slots
 
-    if wants_raw:
-        # desktop app: только свободные слоты (list[str])
-        return [t for t in all_times if t not in busy]
-
-    # web front: все слоты с доступностью (list[dict])
-    return [{"time": t, "available": (t not in busy)} for t in all_times]
+    conn = get_db_sqlite()
+    for hour in range(8, 17):
+        for minute in (0, 30):
+            time_str = f"{hour:02d}:{minute:02d}"
+            existing = conn.execute(
+                "SELECT id FROM appointments WHERE doctor_id = ? AND appointment_date = ? AND appointment_time = ? AND status = 'активна'",
+                (doctor_id, date, time_str),
+            ).fetchone()
+            if existing is None:
+                slots.append(time_str)
+    conn.close()
+    return slots
 
 
 @app.post("/api/appointments")
@@ -660,7 +649,12 @@ def add_to_queue(data: dict):
         raise HTTPException(status_code=400, detail="appointment_id required")
 
     if USE_POSTGRES:
-        apt = pg_query_one("SELECT id, doctor_id FROM public.appointments WHERE id = %s", (appointment_id,))
+        # берём нужные поля из appointments (для совместимости со схемой queue в вашей БД)
+        apt = pg_query_one(
+            "SELECT id, doctor_id, patient_name, phone, appointment_date, appointment_time, service_name "
+            "FROM public.appointments WHERE id = %s",
+            (appointment_id,),
+        )
         if not apt:
             raise HTTPException(status_code=404, detail="Appointment not found")
 
@@ -674,15 +668,56 @@ def add_to_queue(data: dict):
         if existing:
             return {"success": True, "id": int(existing["id"])}
 
-        new_id = pg_execute(
-            """INSERT INTO public.queue (appointment_id, doctor_id, status, called_at)
-               VALUES (%s, %s, 'ожидание', now())
-               RETURNING id""",
-            (appointment_id, apt["doctor_id"]),
-            returning_id=True,
-        )
-        return {"success": True, "id": int(new_id)}
+        # Подстраиваемся под реальную структуру таблицы queue в Postgres (она могла быть создана ранее другим кодом)
+        cols_meta = pg_table_columns("queue")
+        cols = {c["column_name"] for c in cols_meta}
 
+        insert_cols = []
+        insert_vals = []
+        insert_exprs = []
+
+        def add_col(col, val, use_now=False):
+            if col not in cols:
+                return
+            insert_cols.append(col)
+            if use_now:
+                insert_exprs.append("now()")
+            else:
+                insert_exprs.append("%s")
+                insert_vals.append(val)
+
+        # Базовые поля
+        add_col("appointment_id", int(apt["id"]))
+        add_col("doctor_id", int(apt["doctor_id"]))
+        add_col("status", "ожидание")
+        # В некоторых схемах called_at / created_at обязательны
+        add_col("called_at", None, use_now=True)
+
+        # Часто встречающиеся доп.поля (если они есть и/или NOT NULL)
+        add_col("patient_name", apt.get("patient_name") or "")
+        add_col("phone", apt.get("phone") or "")
+        add_col("appointment_date", apt.get("appointment_date"))
+        add_col("appointment_time", apt.get("appointment_time") or "")
+        add_col("service_name", apt.get("service_name") or "")
+
+        # Сформировать SQL
+        if not insert_cols:
+            # Фолбэк: минимальная вставка (на случай, если table columns не прочитались)
+            new_id = pg_execute(
+                """INSERT INTO public.queue (appointment_id, doctor_id, status, called_at)
+                   VALUES (%s, %s, 'ожидание', now())
+                   RETURNING id""",
+                (appointment_id, apt["doctor_id"]),
+                returning_id=True,
+            )
+            return {"success": True, "id": int(new_id)}
+
+        sql = (
+            "INSERT INTO public.queue (" + ", ".join(insert_cols) + ") "
+            "VALUES (" + ", ".join(insert_exprs) + ") RETURNING id"
+        )
+        new_id = pg_execute(sql, tuple(insert_vals), returning_id=True)
+        return {"success": True, "id": int(new_id)}
     conn = get_db_sqlite()
     cur = conn.cursor()
     apt = cur.execute("SELECT id, doctor_id FROM appointments WHERE id = ?", (appointment_id,)).fetchone()
