@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from datetime import datetime
 import uvicorn
 import os
+import threading
 
 # ------------------------------
 # DB mode:
@@ -159,6 +160,27 @@ def _init_pg_pool():
         sslmode=os.getenv("PGSSLMODE", "require"),
     )
 
+def _pg_conn_key() -> str:
+    # ключ нужен, чтобы psycopg2 pool корректно возвращал соединение именно этому потоку/воркеру
+    return f"{os.getpid()}-{threading.get_ident()}"
+
+def _pg_getconn():
+    _init_pg_pool()
+    key = _pg_conn_key()
+    conn = _pg_pool.getconn(key)
+    return conn, key
+
+def _pg_putconn(conn, key: str):
+    # сначала пробуем вернуть по ключу; если по какой-то причине пул его не знает — пробуем без ключа
+    try:
+        _pg_pool.putconn(conn, key)
+    except Exception:
+        try:
+            _pg_putconn(conn, _key)
+        except Exception:
+            pass
+
+
 def ensure_schema_pg():
     """Добавляет отсутствующие таблицы/колонки (без потери данных).
     Примечание: требует прав на DDL; если прав нет, просто продолжим работу.
@@ -166,7 +188,7 @@ def ensure_schema_pg():
     if not USE_POSTGRES:
         return
     _init_pg_pool()
-    conn = _pg_pool.getconn()
+    conn, _key = _pg_getconn()
     try:
         conn.autocommit = True
         with conn.cursor() as cur:
@@ -268,36 +290,36 @@ def ensure_schema_pg():
                 except Exception:
                     pass
     finally:
-        _pg_pool.putconn(conn)
+        _pg_putconn(conn, _key)
 
 def pg_query_all(sql: str, params=None):
     from psycopg2.extras import RealDictCursor
     _init_pg_pool()
     ensure_schema_pg()
-    conn = _pg_pool.getconn()
+    conn, _key = _pg_getconn()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(sql, params or ())
             return cur.fetchall()
     finally:
-        _pg_pool.putconn(conn)
+        _pg_putconn(conn, _key)
 
 def pg_query_one(sql: str, params=None):
     from psycopg2.extras import RealDictCursor
     _init_pg_pool()
     ensure_schema_pg()
-    conn = _pg_pool.getconn()
+    conn, _key = _pg_getconn()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(sql, params or ())
             return cur.fetchone()
     finally:
-        _pg_pool.putconn(conn)
+        _pg_putconn(conn, _key)
 
 def pg_execute(sql: str, params=None, returning_id: bool = False):
     _init_pg_pool()
     ensure_schema_pg()
-    conn = _pg_pool.getconn()
+    conn, _key = _pg_getconn()
     try:
         with conn.cursor() as cur:
             cur.execute(sql, params or ())
@@ -307,7 +329,7 @@ def pg_execute(sql: str, params=None, returning_id: bool = False):
             conn.commit()
             return new_id
     finally:
-        _pg_pool.putconn(conn)
+        _pg_putconn(conn, _key)
 
 
 # ==============================
