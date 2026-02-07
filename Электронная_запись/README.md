@@ -28,6 +28,8 @@
 
 База данных (Supabase):
 - https://supabase.com/dashboard/project/wkultjmfhdcuwtuhghih/editor/17492?schema=public
+Документ API:
+https://spatial-jaime-dental-clinictj-7c05d6e5.koyeb.app/docs#/
 
 ## 3) Архитектура и роли компонентов
 
