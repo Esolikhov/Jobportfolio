@@ -647,7 +647,7 @@ def get_today_appointments(date: str = None):
             """SELECT a.*, d.name as doctor_name, d.room
                FROM public.appointments a
                JOIN public.doctors d ON a.doctor_id = d.id
-               WHERE a.appointment_date = %s
+               WHERE a.appointment_date = %s AND a.status = 'активна'
                ORDER BY a.appointment_time""",
             (date,),
         )
@@ -657,7 +657,7 @@ def get_today_appointments(date: str = None):
         """SELECT a.*, d.name as doctor_name, d.room
            FROM appointments a
            JOIN doctors d ON a.doctor_id = d.id
-           WHERE a.appointment_date = ?
+           WHERE a.appointment_date = ? AND a.status = 'активна'
            ORDER BY a.appointment_time""",
         (date,),
     ).fetchall()
@@ -802,10 +802,16 @@ def add_to_queue(data: dict):
                 (int(appointment_id), int(apt["doctor_id"])),
                 returning_id=True,
             )
+            # Изменить статус записи на "в_работе"
+            pg_execute("UPDATE public.appointments SET status = 'в_работе' WHERE id = %s", (appointment_id,))
             return {"success": True, "id": int(new_id)}
 
         sql = f"INSERT INTO public.queue ({', '.join(insert_cols)}) VALUES ({', '.join(insert_vals_sql)}) RETURNING id"
         new_id = pg_execute(sql, tuple(params), returning_id=True)
+        
+        # Изменить статус записи на "в_работе"
+        pg_execute("UPDATE public.appointments SET status = 'в_работе' WHERE id = %s", (appointment_id,))
+        
         return {"success": True, "id": int(new_id)}
 
     # SQLite режим
@@ -849,6 +855,11 @@ def add_to_queue(data: dict):
         cur.execute(f"INSERT INTO queue ({', '.join(insert_cols)}) VALUES ({qmarks})", tuple(insert_vals))
         conn.commit()
         new_id = cur.lastrowid
+        
+        # Изменить статус записи на "в_работе"
+        cur.execute("UPDATE appointments SET status = 'в_работе' WHERE id = ?", (appointment_id,))
+        conn.commit()
+        
         return {"success": True, "id": int(new_id)}
     finally:
         conn.close()
@@ -864,16 +875,23 @@ def update_queue_status(queue_id: int, data: dict):
     now_iso = datetime.now().isoformat(timespec="seconds")
 
     if USE_POSTGRES:
-        row = pg_query_one("SELECT id, called_at, doctor_id FROM public.queue WHERE id = %s", (queue_id,))
+        row = pg_query_one("SELECT id, called_at, doctor_id, appointment_id FROM public.queue WHERE id = %s", (queue_id,))
         if not row:
             raise HTTPException(status_code=404, detail="Queue item not found")
 
         doctor_id = row.get("doctor_id")
+        appointment_id = row.get("appointment_id")
 
         if row.get("called_at") is None:
             pg_execute("UPDATE public.queue SET status = %s, called_at = now() WHERE id = %s", (status, queue_id))
         else:
             pg_execute("UPDATE public.queue SET status = %s WHERE id = %s", (status, queue_id))
+        
+        # Изменение статуса записи
+        if status == "завершён":
+            pg_execute("UPDATE public.appointments SET status = 'завершена' WHERE id = %s", (appointment_id,))
+        elif status == "не_пришёл":
+            pg_execute("UPDATE public.appointments SET status = 'не_пришёл' WHERE id = %s", (appointment_id,))
         
         # Изменение статуса врача
         if status in ("готов", "в_работе"):
@@ -884,23 +902,33 @@ def update_queue_status(queue_id: int, data: dict):
                 (doctor_id,)
             )
             if active and active.get("cnt", 0) == 0:
-                pg_execute("UPDATE public.doctors SET status = '' WHERE id = %s", (doctor_id,))
+                # Проверяем текущий статус врача
+                doctor = pg_query_one("SELECT status FROM public.doctors WHERE id = %s", (doctor_id,))
+                if doctor and doctor.get("status") not in ("выходной", ""):
+                    pg_execute("UPDATE public.doctors SET status = 'свободен' WHERE id = %s", (doctor_id,))
         
         return {"success": True}
 
     conn = get_db_sqlite()
     cur = conn.cursor()
-    row = cur.execute("SELECT id, called_at, doctor_id FROM queue WHERE id = ?", (queue_id,)).fetchone()
+    row = cur.execute("SELECT id, called_at, doctor_id, appointment_id FROM queue WHERE id = ?", (queue_id,)).fetchone()
     if not row:
         conn.close()
         raise HTTPException(status_code=404, detail="Queue item not found")
 
     doctor_id = row["doctor_id"]
+    appointment_id = row["appointment_id"]
 
     if row["called_at"] is None:
         cur.execute("UPDATE queue SET status = ?, called_at = ? WHERE id = ?", (status, now_iso, queue_id))
     else:
         cur.execute("UPDATE queue SET status = ? WHERE id = ?", (status, queue_id))
+    
+    # Изменение статуса записи
+    if status == "завершён":
+        cur.execute("UPDATE appointments SET status = 'завершена' WHERE id = ?", (appointment_id,))
+    elif status == "не_пришёл":
+        cur.execute("UPDATE appointments SET status = 'не_пришёл' WHERE id = ?", (appointment_id,))
     
     # Изменение статуса врача
     if status in ("готов", "в_работе"):
@@ -911,7 +939,10 @@ def update_queue_status(queue_id: int, data: dict):
             (doctor_id,)
         ).fetchone()
         if active and active["cnt"] == 0:
-            cur.execute("UPDATE doctors SET status = '' WHERE id = ?", (doctor_id,))
+            # Проверяем текущий статус врача
+            doctor = cur.execute("SELECT status FROM doctors WHERE id = ?", (doctor_id,)).fetchone()
+            if doctor and doctor["status"] not in ("выходной", ""):
+                cur.execute("UPDATE doctors SET status = 'свободен' WHERE id = ?", (doctor_id,))
     
     conn.commit()
     conn.close()
@@ -938,13 +969,47 @@ def update_doctor_status(doctor_id: int, data: dict):
 @app.put("/api/appointments/{apt_id}/cancel")
 def cancel_appointment(apt_id: int):
     if USE_POSTGRES:
+        # Получаем doctor_id из очереди перед удалением
+        queue_item = pg_query_one("SELECT doctor_id FROM public.queue WHERE appointment_id = %s", (apt_id,))
+        
         pg_execute("UPDATE public.appointments SET status = 'отменена' WHERE id = %s", (apt_id,))
         pg_execute("DELETE FROM public.queue WHERE appointment_id = %s", (apt_id,))
+        
+        # Освобождаем врача если у него нет активных пациентов
+        if queue_item:
+            doctor_id = queue_item.get("doctor_id")
+            active = pg_query_one(
+                "SELECT COUNT(*)::int as cnt FROM public.queue WHERE doctor_id = %s AND status IN ('ожидание', 'готов', 'в_работе')",
+                (doctor_id,)
+            )
+            if active and active.get("cnt", 0) == 0:
+                doctor = pg_query_one("SELECT status FROM public.doctors WHERE id = %s", (doctor_id,))
+                if doctor and doctor.get("status") not in ("выходной", ""):
+                    pg_execute("UPDATE public.doctors SET status = 'свободен' WHERE id = %s", (doctor_id,))
+        
         return {"success": True}
 
     conn = get_db_sqlite()
-    conn.execute("UPDATE appointments SET status = 'отменена' WHERE id = ?", (apt_id,))
-    conn.execute("DELETE FROM queue WHERE appointment_id = ?", (apt_id,))
+    cur = conn.cursor()
+    
+    # Получаем doctor_id из очереди перед удалением
+    queue_item = cur.execute("SELECT doctor_id FROM queue WHERE appointment_id = ?", (apt_id,)).fetchone()
+    
+    cur.execute("UPDATE appointments SET status = 'отменена' WHERE id = ?", (apt_id,))
+    cur.execute("DELETE FROM queue WHERE appointment_id = ?", (apt_id,))
+    
+    # Освобождаем врача если у него нет активных пациентов
+    if queue_item:
+        doctor_id = queue_item["doctor_id"]
+        active = cur.execute(
+            "SELECT COUNT(*) as cnt FROM queue WHERE doctor_id = ? AND status IN ('ожидание', 'готов', 'в_работе')",
+            (doctor_id,)
+        ).fetchone()
+        if active and active["cnt"] == 0:
+            doctor = cur.execute("SELECT status FROM doctors WHERE id = ?", (doctor_id,)).fetchone()
+            if doctor and doctor["status"] not in ("выходной", ""):
+                cur.execute("UPDATE doctors SET status = 'свободен' WHERE id = ?", (doctor_id,))
+    
     conn.commit()
     conn.close()
     return {"success": True}
