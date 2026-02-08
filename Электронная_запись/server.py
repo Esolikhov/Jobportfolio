@@ -8,6 +8,7 @@ from datetime import datetime
 import uvicorn
 import os
 import threading
+import time
 
 # ------------------------------
 # DB mode:
@@ -38,6 +39,7 @@ def normalize_date_str(date_str: str) -> str:
             pass
     return s
 
+
 app = FastAPI()
 
 # Разрешаем запросы с Netlify/браузера
@@ -54,6 +56,7 @@ app.add_middleware(
 def health():
     return {"status": "ok"}
 
+
 class AppointmentCreate(BaseModel):
     patient_name: str
     phone: str
@@ -67,6 +70,7 @@ class AppointmentCreate(BaseModel):
 # SQLite helpers (local)
 # ==============================
 import sqlite3
+
 
 def ensure_schema_sqlite(conn: sqlite3.Connection) -> None:
     """Мягкая миграция SQLite БД без потери данных.
@@ -152,6 +156,7 @@ def ensure_schema_sqlite(conn: sqlite3.Connection) -> None:
 
     conn.commit()
 
+
 def get_db_sqlite():
     conn = sqlite3.connect(SQLITE_PATH)
     conn.row_factory = sqlite3.Row
@@ -163,6 +168,7 @@ def get_db_sqlite():
 # Postgres helpers (Supabase)
 # ==============================
 _pg_pool = None
+
 
 def _init_pg_pool():
     global _pg_pool
@@ -179,15 +185,18 @@ def _init_pg_pool():
         sslmode=os.getenv("PGSSLMODE", "require"),
     )
 
+
 def _pg_conn_key() -> str:
     # ключ нужен, чтобы psycopg2 pool корректно возвращал соединение именно этому потоку/воркеру
     return f"{os.getpid()}-{threading.get_ident()}"
+
 
 def _pg_getconn():
     _init_pg_pool()
     key = _pg_conn_key()
     conn = _pg_pool.getconn(key)
     return conn, key
+
 
 def _pg_putconn(conn, key: str):
     # сначала пробуем вернуть по ключу; если по какой-то причине пул его не знает — пробуем без ключа
@@ -198,7 +207,6 @@ def _pg_putconn(conn, key: str):
             _pg_pool.putconn(conn)
         except Exception:
             pass
-
 
 
 def ensure_schema_pg():
@@ -312,6 +320,7 @@ def ensure_schema_pg():
     finally:
         _pg_putconn(conn, _key)
 
+
 def pg_query_all(sql: str, params=None):
     from psycopg2.extras import RealDictCursor
     _init_pg_pool()
@@ -340,12 +349,14 @@ def pg_table_columns(table_name: str, schema: str = "public"):
     except Exception:
         return []
 
+
 def pg_has_column(table_name: str, column_name: str, schema: str = "public") -> bool:
     cols = pg_table_columns(table_name, schema=schema)
     for r in cols:
         if str(r.get("column_name", "")).lower() == str(column_name).lower():
             return True
     return False
+
 
 def pg_query_one(sql: str, params=None):
     from psycopg2.extras import RealDictCursor
@@ -358,6 +369,7 @@ def pg_query_one(sql: str, params=None):
             return cur.fetchone()
     finally:
         _pg_putconn(conn, _key)
+
 
 def pg_execute(sql: str, params=None, returning_id: bool = False):
     _init_pg_pool()
@@ -408,7 +420,6 @@ def get_doctors():
         return [dict(row) for row in doctors]
     finally:
         conn.close()
-
 
 
 @app.get("/api/available-slots")
@@ -463,8 +474,8 @@ def get_available_slots(doctor_id: int, date: str):
         resp.append({
             "time": t,
             "available": is_free,
-            "is_available": is_free,   # на случай если фронт использует это имя
-            "disabled": not is_free,   # на случай если фронт использует disabled
+            "is_available": is_free,  # на случай если фронт использует это имя
+            "disabled": not is_free,  # на случай если фронт использует disabled
         })
     return resp
 
@@ -808,17 +819,18 @@ def add_to_queue(data: dict):
 
         sql = f"INSERT INTO public.queue ({', '.join(insert_cols)}) VALUES ({', '.join(insert_vals_sql)}) RETURNING id"
         new_id = pg_execute(sql, tuple(params), returning_id=True)
-        
+
         # Изменить статус записи на "в_работе"
         pg_execute("UPDATE public.appointments SET status = 'в_работе' WHERE id = %s", (appointment_id,))
-        
+
         return {"success": True, "id": int(new_id)}
 
     # SQLite режим
     conn = get_db_sqlite()
     try:
         cur = conn.cursor()
-        apt = cur.execute("SELECT id, doctor_id, patient_name, phone FROM appointments WHERE id = ?", (appointment_id,)).fetchone()
+        apt = cur.execute("SELECT id, doctor_id, patient_name, phone FROM appointments WHERE id = ?",
+                          (appointment_id,)).fetchone()
         if not apt:
             raise HTTPException(status_code=404, detail="Appointment not found")
 
@@ -847,22 +859,25 @@ def add_to_queue(data: dict):
         insert_cols = ["appointment_id", "doctor_id", "patient_name", "status"]
         insert_vals = [appointment_id, apt["doctor_id"], patient_name, "ожидание"]
         if "phone" in cols:
-            insert_cols.append("phone"); insert_vals.append(phone)
+            insert_cols.append("phone");
+            insert_vals.append(phone)
         if "room" in cols:
-            insert_cols.append("room"); insert_vals.append(room)
+            insert_cols.append("room");
+            insert_vals.append(room)
 
         qmarks = ", ".join(["?"] * len(insert_cols))
         cur.execute(f"INSERT INTO queue ({', '.join(insert_cols)}) VALUES ({qmarks})", tuple(insert_vals))
         conn.commit()
         new_id = cur.lastrowid
-        
+
         # Изменить статус записи на "в_работе"
         cur.execute("UPDATE appointments SET status = 'в_работе' WHERE id = ?", (appointment_id,))
         conn.commit()
-        
+
         return {"success": True, "id": int(new_id)}
     finally:
         conn.close()
+
 
 @app.put("/api/queue/{queue_id}/status")
 def update_queue_status(queue_id: int, data: dict):
@@ -875,7 +890,8 @@ def update_queue_status(queue_id: int, data: dict):
     now_iso = datetime.now().isoformat(timespec="seconds")
 
     if USE_POSTGRES:
-        row = pg_query_one("SELECT id, called_at, doctor_id, appointment_id FROM public.queue WHERE id = %s", (queue_id,))
+        row = pg_query_one("SELECT id, called_at, doctor_id, appointment_id FROM public.queue WHERE id = %s",
+                           (queue_id,))
         if not row:
             raise HTTPException(status_code=404, detail="Queue item not found")
 
@@ -886,13 +902,13 @@ def update_queue_status(queue_id: int, data: dict):
             pg_execute("UPDATE public.queue SET status = %s, called_at = now() WHERE id = %s", (status, queue_id))
         else:
             pg_execute("UPDATE public.queue SET status = %s WHERE id = %s", (status, queue_id))
-        
+
         # Изменение статуса записи
         if status == "завершён":
             pg_execute("UPDATE public.appointments SET status = 'завершена' WHERE id = %s", (appointment_id,))
         elif status == "не_пришёл":
             pg_execute("UPDATE public.appointments SET status = 'не_пришёл' WHERE id = %s", (appointment_id,))
-        
+
         # Изменение статуса врача
         if status in ("готов", "в_работе"):
             pg_execute("UPDATE public.doctors SET status = 'занят' WHERE id = %s", (doctor_id,))
@@ -906,7 +922,7 @@ def update_queue_status(queue_id: int, data: dict):
                 doctor = pg_query_one("SELECT status FROM public.doctors WHERE id = %s", (doctor_id,))
                 if doctor and doctor.get("status") not in ("выходной", ""):
                     pg_execute("UPDATE public.doctors SET status = 'свободен' WHERE id = %s", (doctor_id,))
-        
+
         return {"success": True}
 
     conn = get_db_sqlite()
@@ -923,13 +939,13 @@ def update_queue_status(queue_id: int, data: dict):
         cur.execute("UPDATE queue SET status = ?, called_at = ? WHERE id = ?", (status, now_iso, queue_id))
     else:
         cur.execute("UPDATE queue SET status = ? WHERE id = ?", (status, queue_id))
-    
+
     # Изменение статуса записи
     if status == "завершён":
         cur.execute("UPDATE appointments SET status = 'завершена' WHERE id = ?", (appointment_id,))
     elif status == "не_пришёл":
         cur.execute("UPDATE appointments SET status = 'не_пришёл' WHERE id = ?", (appointment_id,))
-    
+
     # Изменение статуса врача
     if status in ("готов", "в_работе"):
         cur.execute("UPDATE doctors SET status = 'занят' WHERE id = ?", (doctor_id,))
@@ -943,7 +959,7 @@ def update_queue_status(queue_id: int, data: dict):
             doctor = cur.execute("SELECT status FROM doctors WHERE id = ?", (doctor_id,)).fetchone()
             if doctor and doctor["status"] not in ("выходной", ""):
                 cur.execute("UPDATE doctors SET status = 'свободен' WHERE id = ?", (doctor_id,))
-    
+
     conn.commit()
     conn.close()
     return {"success": True}
@@ -971,10 +987,10 @@ def cancel_appointment(apt_id: int):
     if USE_POSTGRES:
         # Получаем doctor_id из очереди перед удалением
         queue_item = pg_query_one("SELECT doctor_id FROM public.queue WHERE appointment_id = %s", (apt_id,))
-        
+
         pg_execute("UPDATE public.appointments SET status = 'отменена' WHERE id = %s", (apt_id,))
         pg_execute("DELETE FROM public.queue WHERE appointment_id = %s", (apt_id,))
-        
+
         # Освобождаем врача если у него нет активных пациентов
         if queue_item:
             doctor_id = queue_item.get("doctor_id")
@@ -986,18 +1002,18 @@ def cancel_appointment(apt_id: int):
                 doctor = pg_query_one("SELECT status FROM public.doctors WHERE id = %s", (doctor_id,))
                 if doctor and doctor.get("status") not in ("выходной", ""):
                     pg_execute("UPDATE public.doctors SET status = 'свободен' WHERE id = %s", (doctor_id,))
-        
+
         return {"success": True}
 
     conn = get_db_sqlite()
     cur = conn.cursor()
-    
+
     # Получаем doctor_id из очереди перед удалением
     queue_item = cur.execute("SELECT doctor_id FROM queue WHERE appointment_id = ?", (apt_id,)).fetchone()
-    
+
     cur.execute("UPDATE appointments SET status = 'отменена' WHERE id = ?", (apt_id,))
     cur.execute("DELETE FROM queue WHERE appointment_id = ?", (apt_id,))
-    
+
     # Освобождаем врача если у него нет активных пациентов
     if queue_item:
         doctor_id = queue_item["doctor_id"]
@@ -1009,7 +1025,7 @@ def cancel_appointment(apt_id: int):
             doctor = cur.execute("SELECT status FROM doctors WHERE id = ?", (doctor_id,)).fetchone()
             if doctor and doctor["status"] not in ("выходной", ""):
                 cur.execute("UPDATE doctors SET status = 'свободен' WHERE id = ?", (doctor_id,))
-    
+
     conn.commit()
     conn.close()
     return {"success": True}
@@ -1020,7 +1036,8 @@ def get_stats():
     if USE_POSTGRES:
         total = pg_query_one("SELECT COUNT(*)::int as cnt FROM public.appointments")["cnt"]
         active = pg_query_one("SELECT COUNT(*)::int as cnt FROM public.appointments WHERE status = 'активна'")["cnt"]
-        cancelled = pg_query_one("SELECT COUNT(*)::int as cnt FROM public.appointments WHERE status = 'отменена'")["cnt"]
+        cancelled = pg_query_one("SELECT COUNT(*)::int as cnt FROM public.appointments WHERE status = 'отменена'")[
+            "cnt"]
         completed = pg_query_one("SELECT COUNT(*)::int as cnt FROM public.queue WHERE status = 'завершён'")["cnt"]
         doctors_stats = pg_query_all(
             """SELECT d.name, COUNT(q.id)::int as completed_count
@@ -1054,6 +1071,119 @@ def get_stats():
         "completed": completed,
         "doctors": [dict(row) for row in doctors_stats],
     }
+
+
+# ==============================
+# Автоматический вызов пациентов
+# ==============================
+def auto_call_appointments():
+    """Фоновый поток для автоматического добавления записей в очередь по времени"""
+    print("🕒 Автовызов пациентов запущен...")
+    
+    while True:
+        try:
+            time.sleep(30)  # Проверка каждые 30 секунд
+            
+            now = datetime.now()
+            current_date = now.strftime("%Y-%m-%d")
+            current_time = now.strftime("%H:%M")
+            
+            # Получаем активные записи на сегодня
+            if USE_POSTGRES:
+                appointments = pg_query_all(
+                    """SELECT a.id, a.appointment_time, a.patient_name
+                       FROM public.appointments a
+                       WHERE a.appointment_date = %s AND a.status = 'активна'""",
+                    (current_date,)
+                )
+            else:
+                conn = get_db_sqlite()
+                appointments = conn.execute(
+                    """SELECT id, appointment_time, patient_name
+                       FROM appointments
+                       WHERE appointment_date = ? AND status = 'активна'""",
+                    (current_date,)
+                ).fetchall()
+                appointments = [dict(row) for row in appointments]
+                conn.close()
+            
+            # Проверяем каждую запись
+            for apt in appointments:
+                apt_time = apt.get('appointment_time', '')
+                
+                if apt_time:
+                    try:
+                        # Парсим время записи
+                        apt_datetime = datetime.strptime(f"{current_date} {apt_time}", "%Y-%m-%d %H:%M")
+                        time_diff = abs((now - apt_datetime).total_seconds())
+                        
+                        # Если разница меньше 2 минут (120 секунд)
+                        if time_diff < 120:
+                            # Проверяем, не в очереди ли уже
+                            if USE_POSTGRES:
+                                existing = pg_query_one(
+                                    "SELECT id FROM public.queue WHERE appointment_id = %s AND status NOT IN ('завершён','не_пришёл')",
+                                    (apt['id'],)
+                                )
+                            else:
+                                conn = get_db_sqlite()
+                                existing = conn.execute(
+                                    "SELECT id FROM queue WHERE appointment_id = ? AND status NOT IN ('завершён','не_пришёл')",
+                                    (apt['id'],)
+                                ).fetchone()
+                                conn.close()
+                            
+                            # Если еще не в очереди - добавляем
+                            if not existing:
+                                try:
+                                    # Добавляем в очередь
+                                    if USE_POSTGRES:
+                                        # Получаем данные записи
+                                        full_apt = pg_query_one(
+                                            "SELECT id, doctor_id, patient_name, phone FROM public.appointments WHERE id = %s",
+                                            (apt['id'],)
+                                        )
+                                        
+                                        if full_apt:
+                                            pg_execute(
+                                                """INSERT INTO public.queue (appointment_id, doctor_id, patient_name, status)
+                                                   VALUES (%s, %s, %s, 'ожидание')""",
+                                                (apt['id'], full_apt['doctor_id'], full_apt['patient_name'])
+                                            )
+                                            # Меняем статус записи
+                                            pg_execute("UPDATE public.appointments SET status = 'в_работе' WHERE id = %s", (apt['id'],))
+                                            print(f"✓ Автовызов: {apt['patient_name']} в {apt_time}")
+                                    else:
+                                        conn = get_db_sqlite()
+                                        cur = conn.cursor()
+                                        full_apt = cur.execute(
+                                            "SELECT id, doctor_id, patient_name, phone FROM appointments WHERE id = ?",
+                                            (apt['id'],)
+                                        ).fetchone()
+                                        
+                                        if full_apt:
+                                            cur.execute(
+                                                """INSERT INTO queue (appointment_id, doctor_id, patient_name, status)
+                                                   VALUES (?, ?, ?, 'ожидание')""",
+                                                (apt['id'], full_apt['doctor_id'], full_apt['patient_name'], 'ожидание')
+                                            )
+                                            # Меняем статус записи
+                                            cur.execute("UPDATE appointments SET status = 'в_работе' WHERE id = ?", (apt['id'],))
+                                            conn.commit()
+                                            print(f"✓ Автовызов: {apt['patient_name']} в {apt_time}")
+                                        conn.close()
+                                except Exception as e:
+                                    print(f"Ошибка автовызова для {apt.get('patient_name')}: {e}")
+                    except Exception as e:
+                        print(f"Ошибка обработки времени: {e}")
+        
+        except Exception as e:
+            print(f"Ошибка в автовызове: {e}")
+            time.sleep(30)
+
+# Запускаем автовызов в фоновом потоке
+auto_call_thread = threading.Thread(target=auto_call_appointments, daemon=True)
+auto_call_thread.start()
 
 
 # Чтобы backend-url мог отдавать фронт-страницу и статику (если хочешь)
