@@ -6,3 +6,4 @@ pyttsx3==2.90
 customtkinter
 pillow
 psycopg2-binary==2.9.9
+tkcalendar
