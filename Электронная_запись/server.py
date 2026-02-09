@@ -422,26 +422,25 @@ def create_service(data: dict):
     conn.close()
     return {"success": True, "id": int(new_id)}
 
-    @app.get("/api/available-slots")
-    def get_available_slots(date: str, doctor_id: int = None):
-        """Возвращает доступные слоты времени"""
+@app.get("/api/available-slots")
+def get_available_slots(date: str, doctor_id: int = None):
+    """Возвращает доступные слоты времени"""
 
-        # ✅ КЛЮЧЕВАЯ СТРОКА
-        date = normalize_date_str(date)
+    # нормализуем дату
+    date = normalize_date_str(date)
 
-        # Генерируем слоты
-        slots = []
-        h, m = 8, 0
-        while True:
-            slots.append(f"{h:02d}:{m:02d}")
-            m += 30
-            if m >= 60:
-                h += 1
-                m -= 60
-            if h > 18 or (h == 18 and m > 0):
-                break
+    # Генерируем слоты
+    slots = []
+    h, m = 8, 0
+    while True:
+        slots.append(f"{h:02d}:{m:02d}")
+        m += 30
+        if m >= 60:
+            h += 1
+            m -= 60
+        if h > 18 or (h == 18 and m > 0):
+            break
 
-        # дальше код БЕЗ изменений
     # Фильтруем занятые слоты
     if USE_POSTGRES:
         if doctor_id:
@@ -459,9 +458,9 @@ def create_service(data: dict):
 
         occupied_times = {
             (
-                row['appointment_time'].strftime("%H:%M")
-                if hasattr(row['appointment_time'], "strftime")
-                else str(row['appointment_time'])[:5]
+                row["appointment_time"].strftime("%H:%M")
+                if hasattr(row["appointment_time"], "strftime")
+                else str(row["appointment_time"])[:5]
             )
             for row in occupied
         }
@@ -481,20 +480,11 @@ def create_service(data: dict):
                 (date,)
             ).fetchall()
 
-        occupied_times = {
-            (
-                row['appointment_time'].strftime("%H:%M")
-                if hasattr(row['appointment_time'], "strftime")
-                else str(row['appointment_time'])[:5]
-            )
-            for row in occupied
-        }
+        occupied_times = {str(row["appointment_time"])[:5] for row in occupied}
         conn.close()
 
     available_slots = [slot for slot in slots if slot not in occupied_times]
-
     return [{"time": slot} for slot in available_slots]
-
 
 
 @app.post("/api/appointments")
