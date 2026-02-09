@@ -368,7 +368,7 @@ def pg_execute(sql: str, params: tuple = (), returning_id: bool = False):
 def get_doctors():
     """Возвращает список всех врачей"""
     if USE_POSTGRES:
-        doctors = pg_query_all("SELECT * FROM public.doctors WHERE COALESCE(is_active::text, '1') IN ('1', 't', 'true', 'TRUE') ORDER BY id")
+        doctors = pg_query_all("SELECT * FROM public.doctors WHERE is_active = TRUE ORDER BY id")
         return doctors
 
     conn = get_db_sqlite()
@@ -720,60 +720,33 @@ def add_to_queue(data: dict):
         if not apt:
             raise HTTPException(status_code=404, detail="Appointment not found")
 
-        doctor_id = apt["doctor_id"]
-        room = apt.get("room", "")
+        doctor_id = apt.get("doctor_id")
+        patient_name = apt.get("patient_name") or apt.get("name") or ""
+        if not patient_name:
+            raise HTTPException(status_code=422, detail="patient_name missing in appointment")
+
+        # room is required (NOT NULL) in queue table
+        room = apt.get("room")
+        if not room and doctor_id is not None:
+            doc = pg_query_one("SELECT room FROM public.doctors WHERE id = %s", (doctor_id,))
+            room = (doc.get("room") if doc else None)
+
+        if not room:
+            room = "-"  # безопасное значение, чтобы не нарушать NOT NULL
 
         # Проверяем, не в очереди ли уже
         exists = pg_query_one(
-            "SELECT id FROM public.queue WHERE appointment_id = %s AND status NOT IN ('завершён', 'не_пришёл')",
-            (appointment_id,)
+            "SELECT id FROM public.queue WHERE appointment_id = %s AND status NOT IN ('завершён', 'не_пришёл', 'отменён')",
+            (appointment_id,),
         )
         if exists:
-            raise HTTPException(status_code=400, detail="Уже в очереди")
+            return {"ok": True, "queue_id": exists["id"], "message": "Already in queue"}
 
-        # Подтягиваем данные записи, чтобы заполнить обязательные поля очереди (patient_name и др.)
-        apt = pg_query_one(
-            "SELECT patient_name, phone, service_name, duration_hours FROM public.appointments WHERE id = %s",
-            (appointment_id,)
-        )
-        if not apt:
-            raise HTTPException(status_code=404, detail="Appointment not found")
+        sql = "INSERT INTO public.queue (appointment_id, patient_name, doctor_id, room, status) VALUES (%s, %s, %s, %s, 'ожидание')"
+        params = (appointment_id, patient_name, doctor_id, room)
+        new_id = pg_execute(sql, params, returning_id=True)
 
-        # Список колонок таблицы queue (чтобы не ломаться при разной схеме)
-        cols_rows = pg_query_all(
-            "SELECT column_name FROM information_schema.columns "
-            "WHERE table_schema='public' AND table_name='queue'"
-        )
-        q_cols = {r['column_name'] for r in cols_rows}
-
-        insert_cols = []
-        insert_vals = []
-        params = []
-        def _add(col, val):
-            if col in q_cols:
-                insert_cols.append(col)
-                insert_vals.append("%s")
-                params.append(val)
-
-        _add("appointment_id", appointment_id)
-        _add("doctor_id", doctor_id)
-        _add("status", "ожидание")
-        # Часто в schema есть NOT NULL patient_name
-        _add("patient_name", apt.get("patient_name"))
-        _add("phone", apt.get("phone"))
-        _add("service_name", apt.get("service_name"))
-        _add("duration_hours", apt.get("duration_hours") or 1)
-
-        if not insert_cols:
-            raise HTTPException(status_code=500, detail="Queue table columns not found")
-
-        sql = f"INSERT INTO public.queue ({', '.join(insert_cols)}) VALUES ({', '.join(insert_vals)})"
-        new_id = pg_execute(sql, tuple(params), returning_id=True)
-
-        # Изменить статус записи на "в_работе"
-        pg_execute("UPDATE public.appointments SET status = 'в_работе' WHERE id = %s", (appointment_id,))
-
-        return {"success": True, "id": int(new_id)}
+        return {"ok": True, "id": new_id, "appointment_id": appointment_id, "patient_name": patient_name, "doctor_id": doctor_id, "room": room, "status": "ожидание"}
 
     conn = get_db_sqlite()
     cur = conn.cursor()
