@@ -325,18 +325,6 @@ def pg_query_all(sql: str, params: tuple = ()):
         _pg_putconn(conn, key)
 
 
-
-def pg_get_columns(table: str, schema: str = "public") -> set[str]:
-    """Возвращает множество названий колонок таблицы (PostgreSQL)."""
-    rows = pg_query_all(
-        """SELECT column_name
-             FROM information_schema.columns
-             WHERE table_schema = %s AND table_name = %s""",
-        (schema, table),
-    )
-    return {r["column_name"] for r in rows}
-
-
 def pg_query_one(sql: str, params: tuple = ()):
     """Выполняет SELECT, возвращает один dict или None."""
     conn, key = _pg_getconn()
@@ -380,7 +368,7 @@ def pg_execute(sql: str, params: tuple = (), returning_id: bool = False):
 def get_doctors():
     """Возвращает список всех врачей"""
     if USE_POSTGRES:
-        doctors = pg_query_all("SELECT * FROM public.doctors WHERE COALESCE(is_active::text,'') IN ('true','t','1') ORDER BY id")
+        doctors = pg_query_all("SELECT * FROM public.doctors WHERE COALESCE(is_active::text, '1') IN ('1', 't', 'true', 'TRUE') ORDER BY id")
         return doctors
 
     conn = get_db_sqlite()
@@ -743,35 +731,43 @@ def add_to_queue(data: dict):
         if exists:
             raise HTTPException(status_code=400, detail="Уже в очереди")
 
-        # Вставляем в очередь (поддержка разных схем таблицы queue)
-        q_cols = pg_get_columns("queue")
+        # Подтягиваем данные записи, чтобы заполнить обязательные поля очереди (patient_name и др.)
+        apt = pg_query_one(
+            "SELECT patient_name, phone, service_name, duration_hours FROM public.appointments WHERE id = %s",
+            (appointment_id,)
+        )
+        if not apt:
+            raise HTTPException(status_code=404, detail="Appointment not found")
 
-        cols = []
-        vals = []
+        # Список колонок таблицы queue (чтобы не ломаться при разной схеме)
+        cols_rows = pg_query_all(
+            "SELECT column_name FROM information_schema.columns "
+            "WHERE table_schema='public' AND table_name='queue'"
+        )
+        q_cols = {r['column_name'] for r in cols_rows}
+
+        insert_cols = []
+        insert_vals = []
         params = []
-
-        def _add(col: str, val):
+        def _add(col, val):
             if col in q_cols:
-                cols.append(col)
-                vals.append("%s")
+                insert_cols.append(col)
+                insert_vals.append("%s")
                 params.append(val)
 
         _add("appointment_id", appointment_id)
         _add("doctor_id", doctor_id)
         _add("status", "ожидание")
+        # Часто в schema есть NOT NULL patient_name
+        _add("patient_name", apt.get("patient_name"))
+        _add("phone", apt.get("phone"))
+        _add("service_name", apt.get("service_name"))
+        _add("duration_hours", apt.get("duration_hours") or 1)
 
-        # Старые схемы могли хранить данные пациента прямо в очереди
-        _add("patient_name", patient_name)
-        _add("phone", phone)
-        _add("service_name", service_name)
-        _add("duration_hours", duration_hours)
-        _add("doctor_name", doctor_name)
-        _add("room", room)
+        if not insert_cols:
+            raise HTTPException(status_code=500, detail="Queue table columns not found")
 
-        if not cols:
-            raise HTTPException(status_code=500, detail="Queue table schema not recognized")
-
-        sql = f"INSERT INTO public.queue ({', '.join(cols)}) VALUES ({', '.join(vals)})"
+        sql = f"INSERT INTO public.queue ({', '.join(insert_cols)}) VALUES ({', '.join(insert_vals)})"
         new_id = pg_execute(sql, tuple(params), returning_id=True)
 
         # Изменить статус записи на "в_работе"
