@@ -368,7 +368,7 @@ def pg_execute(sql: str, params: tuple = (), returning_id: bool = False):
 def get_doctors():
     """Возвращает список всех врачей"""
     if USE_POSTGRES:
-        doctors = pg_query_all("SELECT * FROM public.doctors WHERE is_active = TRUE ORDER BY id")
+        doctors = pg_query_all("SELECT * FROM public.doctors WHERE is_active IS TRUE OR is_active = 1 ORDER BY id")
         return doctors
 
     conn = get_db_sqlite()
