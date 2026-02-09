@@ -426,6 +426,7 @@ def create_service(data: dict):
 @app.get("/api/available-slots")
 def get_available_slots(date: str, doctor_id: int = None):
     """Возвращает доступные слоты времени"""
+
     # Генерируем слоты с 8:00 до 18:00 каждые 30 минут
     slots = []
     h, m = 8, 0
@@ -442,33 +443,55 @@ def get_available_slots(date: str, doctor_id: int = None):
     if USE_POSTGRES:
         if doctor_id:
             occupied = pg_query_all(
-                "SELECT appointment_time FROM public.appointments WHERE doctor_id = %s AND appointment_date = %s AND status = 'активна'",
+                "SELECT appointment_time FROM public.appointments "
+                "WHERE doctor_id = %s AND appointment_date = %s AND status = 'активна'",
                 (doctor_id, date)
             )
         else:
             occupied = pg_query_all(
-                "SELECT appointment_time FROM public.appointments WHERE appointment_date = %s AND status = 'активна'",
+                "SELECT appointment_time FROM public.appointments "
+                "WHERE appointment_date = %s AND status = 'активна'",
                 (date,)
             )
-        occupied_times = {row['appointment_time'] for row in occupied}
+
+        occupied_times = {
+            (
+                row['appointment_time'].strftime("%H:%M")
+                if hasattr(row['appointment_time'], "strftime")
+                else str(row['appointment_time'])[:5]
+            )
+            for row in occupied
+        }
+
     else:
         conn = get_db_sqlite()
         if doctor_id:
             occupied = conn.execute(
-                "SELECT appointment_time FROM appointments WHERE doctor_id = ? AND appointment_date = ? AND status = 'активна'",
+                "SELECT appointment_time FROM appointments "
+                "WHERE doctor_id = ? AND appointment_date = ? AND status = 'активна'",
                 (doctor_id, date)
             ).fetchall()
         else:
             occupied = conn.execute(
-                "SELECT appointment_time FROM appointments WHERE appointment_date = ? AND status = 'активна'",
+                "SELECT appointment_time FROM appointments "
+                "WHERE appointment_date = ? AND status = 'активна'",
                 (date,)
             ).fetchall()
-        occupied_times = {row['appointment_time'] for row in occupied}
+
+        occupied_times = {
+            (
+                row['appointment_time'].strftime("%H:%M")
+                if hasattr(row['appointment_time'], "strftime")
+                else str(row['appointment_time'])[:5]
+            )
+            for row in occupied
+        }
         conn.close()
 
     available_slots = [slot for slot in slots if slot not in occupied_times]
 
     return [{"time": slot} for slot in available_slots]
+
 
 
 @app.post("/api/appointments")
