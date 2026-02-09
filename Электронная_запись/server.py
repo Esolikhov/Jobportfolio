@@ -467,7 +467,8 @@ def get_available_slots(date: str, doctor_id: int = None):
         conn.close()
 
     available_slots = [slot for slot in slots if slot not in occupied_times]
-    return available_slots
+
+    return [{"time": slot} for slot in available_slots]
 
 
 @app.post("/api/appointments")
