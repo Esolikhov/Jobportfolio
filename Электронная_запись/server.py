@@ -325,6 +325,18 @@ def pg_query_all(sql: str, params: tuple = ()):
         _pg_putconn(conn, key)
 
 
+
+def pg_get_columns(table: str, schema: str = "public") -> set[str]:
+    """Возвращает множество названий колонок таблицы (PostgreSQL)."""
+    rows = pg_query_all(
+        """SELECT column_name
+             FROM information_schema.columns
+             WHERE table_schema = %s AND table_name = %s""",
+        (schema, table),
+    )
+    return {r["column_name"] for r in rows}
+
+
 def pg_query_one(sql: str, params: tuple = ()):
     """Выполняет SELECT, возвращает один dict или None."""
     conn, key = _pg_getconn()
@@ -368,10 +380,7 @@ def pg_execute(sql: str, params: tuple = (), returning_id: bool = False):
 def get_doctors():
     """Возвращает список всех врачей"""
     if USE_POSTGRES:
-        doctors = pg_query_all(
-            "SELECT * FROM public.doctors WHERE is_active = 1 ORDER BY id"
-        )
-
+        doctors = pg_query_all("SELECT * FROM public.doctors WHERE COALESCE(is_active::text,'') IN ('true','t','1') ORDER BY id")
         return doctors
 
     conn = get_db_sqlite()
@@ -734,11 +743,36 @@ def add_to_queue(data: dict):
         if exists:
             raise HTTPException(status_code=400, detail="Уже в очереди")
 
-        new_id = pg_execute(
-            "INSERT INTO public.queue (appointment_id, doctor_id, status) VALUES (%s, %s, 'ожидание')",
-            (appointment_id, doctor_id),
-            returning_id=True
-        )
+        # Вставляем в очередь (поддержка разных схем таблицы queue)
+        q_cols = pg_get_columns("queue")
+
+        cols = []
+        vals = []
+        params = []
+
+        def _add(col: str, val):
+            if col in q_cols:
+                cols.append(col)
+                vals.append("%s")
+                params.append(val)
+
+        _add("appointment_id", appointment_id)
+        _add("doctor_id", doctor_id)
+        _add("status", "ожидание")
+
+        # Старые схемы могли хранить данные пациента прямо в очереди
+        _add("patient_name", patient_name)
+        _add("phone", phone)
+        _add("service_name", service_name)
+        _add("duration_hours", duration_hours)
+        _add("doctor_name", doctor_name)
+        _add("room", room)
+
+        if not cols:
+            raise HTTPException(status_code=500, detail="Queue table schema not recognized")
+
+        sql = f"INSERT INTO public.queue ({', '.join(cols)}) VALUES ({', '.join(vals)})"
+        new_id = pg_execute(sql, tuple(params), returning_id=True)
 
         # Изменить статус записи на "в_работе"
         pg_execute("UPDATE public.appointments SET status = 'в_работе' WHERE id = %s", (appointment_id,))
