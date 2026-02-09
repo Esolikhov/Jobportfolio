@@ -422,23 +422,26 @@ def create_service(data: dict):
     conn.close()
     return {"success": True, "id": int(new_id)}
 
+    @app.get("/api/available-slots")
+    def get_available_slots(date: str, doctor_id: int = None):
+        """Возвращает доступные слоты времени"""
 
-@app.get("/api/available-slots")
-def get_available_slots(date: str, doctor_id: int = None):
-    """Возвращает доступные слоты времени"""
+        # ✅ КЛЮЧЕВАЯ СТРОКА
+        date = normalize_date_str(date)
 
-    # Генерируем слоты с 8:00 до 18:00 каждые 30 минут
-    slots = []
-    h, m = 8, 0
-    while True:
-        slots.append(f"{h:02d}:{m:02d}")
-        m += 30
-        if m >= 60:
-            h += 1
-            m -= 60
-        if h > 18 or (h == 18 and m > 0):
-            break
+        # Генерируем слоты
+        slots = []
+        h, m = 8, 0
+        while True:
+            slots.append(f"{h:02d}:{m:02d}")
+            m += 30
+            if m >= 60:
+                h += 1
+                m -= 60
+            if h > 18 or (h == 18 and m > 0):
+                break
 
+        # дальше код БЕЗ изменений
     # Фильтруем занятые слоты
     if USE_POSTGRES:
         if doctor_id:
